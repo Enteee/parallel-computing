@@ -1,19 +1,21 @@
 #include <iostream>
 #include <stdlib.h>
-#include <mpi.h>
+
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/mpi/environment.hpp>
+#include <boost/mpi/communicator.hpp>
 
 using namespace boost;
+
 typedef boost::adjacency_list<listS, vecS, undirectedS> undirected_adjacency;
-
 class Ring_topology {
-        undirected_adjacency g;
-        int world_rank;
+    undirected_adjacency g;
+    int world_rank;
 
-    public:
-        Ring_topology(int world_size,int world_rank);
-        void print();
-        void leader_elect();
+public:
+    Ring_topology(int world_size,int world_rank);
+    void print();
+    void leader_elect();
 
 };
 
@@ -42,42 +44,26 @@ void Ring_topology::print(){
         for(;adjacent_vertex_iter != adjacent_vertex_end;adjacent_vertex_iter++){
             std::cout << " ( " << *adjacent_vertex_iter << " ) ";
         }
-        std::cout << "\n";
+        std::cout << std::endl;
     }
 }
 
 void Ring_topology::leader_elect(){
-
+    
 }
 
 /**
 * Main entry point for app
 */
 int main(int argc, char *argv[]){
-    // Initialize the MPI environment
-    MPI_Init(NULL, NULL);
+    mpi::environment env;
+    mpi::communicator world;
 
-    // Get the number of processes
-    int world_size;
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
-    // Get the rank of the process
-    int world_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-
-    // Get the name of the processor
-    char processor_name[MPI_MAX_PROCESSOR_NAME];
-    int name_len;
-    MPI_Get_processor_name(processor_name, &name_len);
-
-    // Build connection graph
-    Ring_topology ring(world_size,world_rank);
-    if(world_rank == 0){
+    // Build topology
+    Ring_topology ring(world.size(),world.rank());
+    if(world.rank() == 0){
         ring.print();
     }
-
-    // Finalize the MPI environment.
-    MPI_Finalize();
 
     return EXIT_SUCCESS;
 }

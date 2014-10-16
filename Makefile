@@ -7,8 +7,14 @@ source_files := main.cpp
 
 CC := g++
 TARGET_DIR := target
+
+# MPI
 MPI_COMPILE_FLAGS = $(shell mpic++ --showme:compile)
 MPI_LINK_FLAGS = $(shell mpic++ --showme:link)
+
+COMPILE_FLAGS = $(MPI_COMPILE_FLAGS)
+LINK_FLAGS = $(MPI_LINK_FLAGS) -lboost_mpi -lboost_serialization
+
 
 MPI_RUN_COPIES=6
 
@@ -16,7 +22,7 @@ MPI_RUN_COPIES=6
 
 $(application): $(source_files)
 	mkdir -p $(TARGET_DIR)
-	$(CC) $(MPI_COMPILE_FLAGS) $(source_files)  $(MPI_LINK_FLAGS) -o $(TARGET_DIR)/$(application)
+	$(CC) $(COMPILE_FLAGS) $(source_files) $(LINK_FLAGS) -o $(TARGET_DIR)/$(application)
 
 run: $(application)
 	mpirun -n $(MPI_RUN_COPIES) ./$(TARGET_DIR)/$(application)
