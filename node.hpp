@@ -6,21 +6,60 @@
 
 using namespace boost;
 
-class Ring_node {
+/**
+* Basic node
+*/
+class Node {
 private:
+
+protected:
     mpi::environment env;
     mpi::communicator world;
     int node_rank;
-    int next;
-    int prev;
+    virtual std::string get_info() = 0;
 
 public:
-    Ring_node();
+    Node();
     void print();
     /*
     * Select the one with the lowest node_rank && world.rank() as leader
     */
+    virtual void leader_elect() = 0;
+};
+
+/**
+* Node in a ring topology
+*
+* 1 -> 2 -> 3
+* ^         |
+* |         v
+* 6 <- 5 <- 4
+*/
+class Ring_node : public Node {
+private:
+    int next;
+    int prev;
+
+protected:
+    std::string get_info();
+
+public:
+    Ring_node();
     void leader_elect();
+
+};
+
+class Tree_node : public Node{
+private:
+    std::vector<int> connected;
+
+protected:
+    std::string get_info();
+
+public:
+    Tree_node();
+    void leader_elect();
+
 };
 
 #endif

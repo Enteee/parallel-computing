@@ -4,6 +4,8 @@
 
 #include "node.hpp"
 
+#define NODE_TYPE Tree_node
+
 /**
 * Main entry point for app
 */
@@ -13,8 +15,9 @@ int main(int argc, char *argv[]){
     std::srand(std::clock());
 
     // Build node
-    Ring_node ring;
-    ring.leader_elect();
+    NODE_TYPE node;
+    node.print();
+    node.leader_elect();
 
     return EXIT_SUCCESS;
 }
