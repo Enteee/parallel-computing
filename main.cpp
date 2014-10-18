@@ -14,80 +14,66 @@ private:
 
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version){
+        ar & sender;
         ar & leader;
+        ar & leader_node_rank;
     }
-
-    int leader;
 public:
+    int sender;
+    int leader;
+    int leader_node_rank;
     int tag(){
         return 0;
     }
 };
 BOOST_IS_MPI_DATATYPE(MSG_ring_leader_elect);
 
-typedef property<vertex_index_t, int, property<vertex_name_t, std::string> > VertexProperty;
-typedef boost::adjacency_list<listS, vecS, undirectedS> undirected_adjacency;
-
-class Ring_topology {
+class Ring_node {
 private:
-    undirected_adjacency g;
     mpi::environment env;
     mpi::communicator world;
-    int topology_rank;
+    int node_rank;
+    int next;
+    int prev;
 
 public:
-    Ring_topology();
+    Ring_node();
     void print();
-    void send_to_connected(MSG_ring_leader_elect msg);
     /*
-    * Select the one with the lowest topology_rank && world.rank() as leader
+    * Select the one with the lowest node_rank && world.rank() as leader
     */
     void leader_elect();
 };
 
-Ring_topology::Ring_topology(){
+Ring_node::Ring_node(){
     // set rank
-    topology_rank = std::rand();
-    // Build world
-    for(int i=0;i<world.size();i++){
-        add_vertex(g);
-    }
-    undirected_adjacency::vertex_iterator vertex_iter, vertex_end;
-    for(tie(vertex_iter, vertex_end) = vertices(g);vertex_iter != vertex_end; vertex_iter++){
-        add_edge(*(vertex_iter),*(vertex_iter+1),g);
-    }
-    // connect last vertex to first
-    add_edge(*(vertex_iter),0,g);
+    node_rank = std::rand();
+    next = (world.rank() + 1) % world.size();
+    prev = (world.rank() == 0) ? world.size() - 1 : (world.rank() - 1) % world.size();
     print();
 }
 
-void Ring_topology::print(){
-    std::cout << "W: " << world.rank() << " T: " << topology_rank << std::endl;
-    // only one should print the topology
-    if(world.rank() == 0){
-        undirected_adjacency::vertex_iterator vertex_iter, vertex_end;
-        for(tie(vertex_iter, vertex_end) = vertices(g);vertex_iter != vertex_end; vertex_iter++){
-            std::cout << *vertex_iter << " ->";
-            // print adjacent vertices
-            undirected_adjacency::adjacency_iterator adjacent_vertex_iter, adjacent_vertex_end;
-            for(tie(adjacent_vertex_iter, adjacent_vertex_end) = adjacent_vertices(*vertex_iter,g);adjacent_vertex_iter != adjacent_vertex_end;adjacent_vertex_iter++){
-                std::cout << " ( " << *adjacent_vertex_iter << " ) ";
-            }
-            std::cout << std::endl;
-        }
-    }
+void Ring_node::print(){
+    std::cout << "[" << world.rank() << "] rank: " << node_rank << " next: " << next << " prev: "<< prev << std::endl;
 }
 
-void Ring_topology::leader_elect(){
+void Ring_node::leader_elect(){
+    // perpare message
     MSG_ring_leader_elect msg;
-    send_to_connected(MSG_ring_leader_elect());
-}
-
-void Ring_topology::send_to_connected(MSG_ring_leader_elect msg){
-    undirected_adjacency::adjacency_iterator adjacent_vertex_iter, adjacent_vertex_end;
-    for(tie(adjacent_vertex_iter, adjacent_vertex_end) = adjacent_vertices(world.rank(),g);adjacent_vertex_iter != adjacent_vertex_end;adjacent_vertex_iter++){
-        world.send(*adjacent_vertex_iter,msg.tag(),msg);
-    }
+    msg.sender              = world.rank();
+    msg.leader              = world.rank();
+    msg.leader_node_rank    = node_rank;
+    do {
+        // send message to ring
+        world.send(next,msg.tag(),msg);
+        world.recv(prev, msg.tag(), msg);
+        if(msg.leader_node_rank < node_rank
+            || ( msg.leader_node_rank == node_rank && msg.leader < world.rank())){
+            msg.leader              = world.rank();
+            msg.leader_node_rank    = node_rank;
+        }
+    }while(msg.sender != world.rank()); // message went around
+    std::cout << "Leader: " << msg.leader << std::endl;
 }
 
 /**
@@ -98,8 +84,8 @@ int main(int argc, char *argv[]){
     // seed random
     std::srand(std::clock());
 
-    // Build topology
-    Ring_topology ring;
+    // Build node
+    Ring_node ring;
     ring.leader_elect();
 
     return EXIT_SUCCESS;
