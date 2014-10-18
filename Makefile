@@ -10,12 +10,12 @@ DEBUG := gdb
 TARGET_DIR := target
 
 # MPI
-MPI_COMPILE_FLAGS = $(shell mpic++ --showme:compile)
+MPI_COMPILE_FLAGS = $(shell mpic++ --showme:compile) -O0
 MPI_LINK_FLAGS = $(shell mpic++ --showme:link)
-MPI_RUN_COPIES=6
+MPI_RUN_COPIES=10
 MPI_RUN_FLAGS =-n $(MPI_RUN_COPIES)
 MPI_RUN_TERMINAL=urxvt -e
-MPI_RUN_DEBUG=$(MPI_RUN_TERMINAL) gdb 
+MPI_RUN_DEBUG=$(MPI_RUN_TERMINAL) gdb -ex run
 
 COMPILE_FLAGS = -fdiagnostics-color $(MPI_COMPILE_FLAGS) -g -Wall
 LINK_FLAGS = $(MPI_LINK_FLAGS) -lboost_mpi -lboost_serialization

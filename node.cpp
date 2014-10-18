@@ -7,6 +7,7 @@
 #include <sstream>
 
 #include "msg.hpp"
+#include "utils.hpp"
 
 Node::Node(){
     // set rank
@@ -58,7 +59,7 @@ Tree_node::Tree_node(){
         }
         std::random_shuffle( nodes.begin(), nodes.end() );
         // level 0 must only have 1 node
-        std::vector< int > l0(1);
+        std::vector< int > l0;
         l0.insert(l0.begin(),nodes.front());
         levels.insert(levels.begin(),l0); 
         // iterate over all other nodes
@@ -67,14 +68,14 @@ Tree_node::Tree_node(){
             if(add_level == 0){ // we can't add to root -> add new level
                 std::vector < int > l_new;
                 levels.insert(levels.end(),l_new);
-                add_level = levels.size();
+                add_level = (levels.size()-1);
             }
             levels[add_level].push_back(*it);
         }
         // connect levels
-        for (std::vector< std::vector< int > >::iterator levels_it = levels.end(); levels_it != (levels.begin() + 1); --levels_it){
+        for (std::vector< std::vector< int > >::reverse_iterator levels_it = levels.rbegin(); (levels_it+1) != levels.rend(); ++levels_it){
             std::vector< int > level_l = *levels_it;
-            std::vector< int > level_h = *(levels_it-1);
+            std::vector< int > level_h = *(levels_it+1);
             for (std::vector< int >::iterator nodes_it = level_l.begin(); nodes_it != level_l.end(); ++nodes_it){
                 // connect node to a random node from higher level
                 int node_l = *nodes_it;

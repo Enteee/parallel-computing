@@ -41,6 +41,5 @@ public:
         return MSG_TREE_CONNECT_TAG;
     }
 };
-BOOST_IS_MPI_DATATYPE(MSG_tree_connect);
 
 #endif
