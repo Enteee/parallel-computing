@@ -4,6 +4,8 @@
 #include <boost/mpi/environment.hpp>
 #include <boost/mpi/communicator.hpp>
 
+#include "msg.hpp"
+
 using namespace boost;
 
 /**
@@ -48,10 +50,18 @@ public:
     void leader_elect();
 
 };
-
+/**
+* Node in a tree topology
+* 1 - 2 - 3
+* |
+* 4 - 5      10
+* |           |
+* 6 - 7 - 8 - 9
+*/
 class Tree_node : public Node{
 private:
     std::vector<int> connected;
+    void merge(MSG_tree_leader_elect &msg_dst,MSG_tree_leader_elect &msg_other);
 
 protected:
     std::string get_info();
