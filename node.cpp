@@ -117,18 +117,20 @@ void Tree_node::leader_elect(){
     // read messages from all peers
     for (unsigned int i=0;i < peers.size();++i){
         int peer = peers[i];
-        MSG_tree_leader_elect msg_in = elect_messages[i];
+        MSG_tree_leader_elect & msg_in = elect_messages[i];
         reqs[i] = world.irecv(peer, msg_in.tag(), msg_in);
     }
     while(peers.size() > 1){
         mpi::wait_some(reqs.begin(), reqs.end());
         // check if we got something
         for (unsigned int i=0;i < reqs.size();++i){
-            mpi::request req = reqs[i];
-            MSG_tree_leader_elect msg_in = elect_messages[i];
+            mpi::request & req = reqs[i];
+            MSG_tree_leader_elect & msg_in = elect_messages[i];
             if(req.test()){
                 // we got something
                 std::cout << "Msg from: "<< peers[i] << std::endl;
+                msg.print();
+                msg_in.print();
                 // merge result 
                 msg.merge(msg_in);
                 peers.erase(peers.begin()+i);
@@ -139,34 +141,22 @@ void Tree_node::leader_elect(){
     }
     std::cout << "Peers left: " << peers.size() << std::endl;
     // do I know the result?
-    MSG_tree_leader_propagate msg_prop_out;
-    msg_prop_out.leader             = msg.leader;
-    msg_prop_out.leader_node_rank   = msg.leader_node_rank;
     if(peers.size() > 0){
         // nope: not yet
         int leftover_peer = peers.front();
-        world.send(leftover_peer, msg.tag(), msg);
+        msg.print();
+        world.isend(leftover_peer, msg.tag(), msg);
         // receive propagate
-        // but it might also happen that we get an other elect message
-        MSG_tree_leader_propagate msg_prop_in;
-        reqs.push_back(world.irecv(leftover_peer, msg_prop_in.tag(), msg_prop_in));
         // wait for something to happen
-        mpi::wait_some(reqs.begin(), reqs.end());
+        mpi::wait_all(reqs.begin(), reqs.end());
         // did we got a leader elect message?
-        if(reqs[0].test()){
-            std::cout << "Got election msg" << std::endl;
-            msg_prop_out.merge(elect_messages[0]);
-            reqs[1].cancel();
-        }else{
-            std::cout << "Got propagate msg" << std::endl;
-            msg_prop_out.merge(msg_prop_in);
-            reqs[0].cancel();
-        }
+        std::cout << "Got election msg" << std::endl;
+        msg.merge(elect_messages[0]);
         // propagete to sub-nodes
         for (std::vector< int>::iterator it = connected.begin(); it != connected.end(); ++it){
             if(*it != leftover_peer){
                 std::cout << "Propagate to: " << *it << std::endl;
-                world.send(*it, msg_prop_out.tag(), msg_prop_out);
+                world.send(*it, msg.tag(), msg);
             }
         }
     }else{
@@ -174,8 +164,8 @@ void Tree_node::leader_elect(){
         // broadcast result to all connected
         for (std::vector< int>::iterator it = connected.begin(); it != connected.end(); ++it){
             std::cout << "Propagate to: " << *it << std::endl;
-            world.send(*it, msg_prop_out.tag(), msg_prop_out);
+            world.send(*it, msg.tag(), msg);
         }
     }
-    std::cout << "Leader: " << msg_prop_out.leader << std::endl;
+    std::cout << "Leader: " << msg.leader << std::endl;
 }

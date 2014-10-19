@@ -3,7 +3,7 @@
 # vim: set noexpandtab list:
 #
 application := parallel
-source_files := node.cpp main.cpp
+source_files := msg.cpp node.cpp main.cpp
 
 CC := g++
 DEBUG := gdb
