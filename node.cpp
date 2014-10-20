@@ -8,11 +8,16 @@
 
 #include <boost/mpi/nonblocking.hpp>
 
+#include "main.hpp"
 #include "utils.hpp"
 
 Node::Node(){
     // set rank
     node_rank = std::rand() % world.size();
+#ifdef SEED
+    // re-seed with default seed because mpi messes up random
+    std::srand(SEED);
+#endif
 }
 
 void Node::print(){
@@ -55,7 +60,7 @@ Tree_node::Tree_node(){
         for(int i=0;i<world.size();i++){
             nodes.push_back(i);
         }
-        std::random_shuffle( nodes.begin(), nodes.end() );
+        std::random_shuffle( nodes.begin(), nodes.end(), myrandom );
         // level 0 must only have 1 node
         std::vector< int > l0;
         l0.insert(l0.begin(),nodes.front());
@@ -129,7 +134,9 @@ void Tree_node::leader_elect(){
             if(req.test()){
                 // we got something
                 std::cout << "Msg from: "<< peers[i] << std::endl;
+                std::cout << "MSG:" << std::endl;
                 msg.print();
+                std::cout << "MSG_in:" << std::endl;
                 msg_in.print();
                 // merge result 
                 msg.merge(msg_in);
@@ -147,8 +154,10 @@ void Tree_node::leader_elect(){
         msg.print();
         world.isend(leftover_peer, msg.tag(), msg);
         // receive propagate
-        // wait for something to happen
-        mpi::wait_all(reqs.begin(), reqs.end());
+        // wait for something to happen if we didn't already got something
+        if(!reqs[0].test()){
+            mpi::wait_all(reqs.begin(), reqs.end());
+        }
         // did we got a leader elect message?
         std::cout << "Got election msg" << std::endl;
         msg.merge(elect_messages[0]);

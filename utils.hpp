@@ -1,10 +1,13 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
-#include <csignal>
+// break in the debugger when called
+inline void debug_break();
 
-inline void debug_break(){
-    raise(SIGINT);
-}
+// random generator function:
+int myrandom (int i);
+
+// print some random variables (check if seed is alwasy the same)
+void print_random();
 
 #endif

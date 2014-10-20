@@ -56,7 +56,7 @@ public:
         return MSG_RING_LEADER_ELECT_TAG;
     }
 };
-//BOOST_IS_MPI_DATATYPE(MSG_ring_leader_elect);
+BOOST_IS_MPI_DATATYPE(MSG_ring_leader_elect);
 //BOOST_CLASS_EXPORT(MSG_ring_leader_elect);
 
 #define MSG_TREE_CONNECT_TAG 1
@@ -90,7 +90,7 @@ public:
         return MSG_TREE_LEADER_ELECT_TAG;
     }
 };
-//BOOST_IS_MPI_DATATYPE(MSG_tree_leader_elect);
+BOOST_IS_MPI_DATATYPE(MSG_tree_leader_elect);
 //BOOST_CLASS_EXPORT(MSG_tree_leader_elect);
 
 #endif
