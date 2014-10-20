@@ -41,13 +41,18 @@ void Ring_node::leader_elect(){
     msg.sender              = world.rank();
     msg.leader              = world.rank();
     msg.leader_node_rank    = node_rank;
+    MSG_ring_leader_elect msg_ring;
+    msg_ring.sender              = world.rank();
+    msg_ring.leader              = world.rank();
+    msg_ring.leader_node_rank    = node_rank;
     do {
         // send message to ring
-        MSG_ring_leader_elect msg_in;
-        world.send(next,msg.tag(), msg);
-        world.recv(prev, msg.tag(), msg_in);
-        msg.merge(msg_in);
-    }while(msg.sender != world.rank()); // message went around
+        world.send(next,msg_ring.tag(), msg_ring);
+        world.recv(prev, msg_ring.tag(), msg_ring);
+        msg_ring.print();
+        msg_ring.merge(msg);
+        msg.merge(msg_ring);
+    }while(msg_ring.sender != world.rank()); // message went around
     std::cout << "Leader: " << msg.leader << std::endl;
 }
 
