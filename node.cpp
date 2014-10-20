@@ -13,7 +13,7 @@
 
 Node::Node(){
     // set rank
-    node_rank = std::rand() % world.size();
+    node_rank = std::rand() % NODE_MAX_RANK;
 #ifdef SEED
     // re-seed with default seed because mpi messes up random
     std::srand(SEED);

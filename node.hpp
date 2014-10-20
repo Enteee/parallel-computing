@@ -6,6 +6,8 @@
 
 #include "msg.hpp"
 
+#define NODE_MAX_RANK 50
+
 using namespace boost;
 
 /**
