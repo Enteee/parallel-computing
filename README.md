@@ -15,7 +15,7 @@ $ make
 
 ## Run
 
-#$ make run
+$ make run
 
 ## Debug
 
