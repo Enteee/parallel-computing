@@ -3,20 +3,20 @@ parallel-computing
 
 Parallel computing project for school
 
-# Requirments 
+## Requirments 
 
 * urxvt installed, or change TERMINAL variable in Makefile
 * mpi library installed
 * boost installed
 
-# Compile
+## Compile
 
 $ make
 
-# Run
+## Run
 
-$ make run
+#$ make run
 
-# Debug
+## Debug
 
 $ make debug
