@@ -159,11 +159,11 @@ void Tree_node::leader_elect(){
         msg.print();
         world.isend(leftover_peer, msg.tag(), msg);
         // receive propagate
-        // wait for something to happen if we didn't already got something
+        // wait for something to happen if we didn't already get something
         if(!reqs[0].test()){
             mpi::wait_all(reqs.begin(), reqs.end());
         }
-        // did we got a leader elect message?
+        // did we get a leader elect message?
         std::cout << "Got election msg" << std::endl;
         msg.merge(elect_messages[0]);
         // propagete to sub-nodes
