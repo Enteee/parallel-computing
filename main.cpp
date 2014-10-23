@@ -27,8 +27,8 @@ int main(int argc, char *argv[]){
     NODE_TYPE node;
     print_random();
     node.print();
-    //node.leader_elect();
-    node.matrix_calc();
+    node.leader_elect();
+    //node.matrix_calc();
 
     return EXIT_SUCCESS;
 }
