@@ -39,6 +39,7 @@ public:
         std::cout << "leader: " << leader << " node_rank: " << leader_node_rank << std::endl;
     }
 };
+BOOST_IS_MPI_DATATYPE(MSG_leader_elect);
 
 #define MSG_RING_LEADER_ELECT_TAG 0
 class MSG_ring_leader_elect : public MSG_leader_elect {

@@ -7,9 +7,11 @@
 #include <sstream>
 
 #include <boost/mpi/nonblocking.hpp>
+#include <boost/mpi/collectives.hpp>
 
 #include "main.hpp"
 #include "utils.hpp"
+#include "matrix.hpp"
 
 Node::Node(){
     // set rank
@@ -182,4 +184,18 @@ void Tree_node::leader_elect(){
         }
     }
     std::cout << "Leader: " << msg.leader << std::endl;
+}
+
+void Tree_node::matrix_calc(){
+    // get a random matrix
+    Matrix_2x2 matrix;
+    matrix.rnd();
+    matrix.print();
+    Matrix_2x2 matrix_out;
+    // register collective
+    mpi::reduce(world,matrix,matrix_out,std::multiplies<Matrix_2x2>(),0);
+    // print result
+    if(world.rank() == 0){
+        matrix_out.print();
+    }
 }

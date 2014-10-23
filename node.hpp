@@ -63,7 +63,6 @@ public:
 class Tree_node : public Node{
 private:
     std::vector<int> connected;
-    void merge(MSG_tree_leader_elect &msg_dst,MSG_tree_leader_elect &msg_other);
 
 protected:
     std::string get_info();
@@ -71,6 +70,7 @@ protected:
 public:
     Tree_node();
     void leader_elect();
+    void matrix_calc();
 
 };
 

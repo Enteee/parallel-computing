@@ -17,7 +17,7 @@ SEED=1
 # MPI
 MPI_COMPILE_FLAGS=$(shell mpic++ --showme:compile) -O0
 MPI_LINK_FLAGS=$(shell mpic++ --showme:link)
-MPI_RUN_COPIES=4
+MPI_RUN_COPIES=3
 MPI_RUN_FLAGS=-n $(MPI_RUN_COPIES)
 MPI_RUN_TERMINAL=$(TERMINAL) -e
 MPI_RUN_DEBUG=$(MPI_RUN_TERMINAL) $(DEBUG) -q -ex run
