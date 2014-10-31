@@ -123,46 +123,65 @@ void Tree_node::leader_elect(){
     MSG_tree_leader_elect msg;
     msg.leader                      = world.rank();
     msg.leader_node_rank            = node_rank;
-    std::vector< int > peers        = connected;
-    std::vector< mpi::request > reqs(peers.size());
-    std::vector< MSG_tree_leader_elect > elect_messages(peers.size());
+    // vecot for all connected nodes
+    std::vector<Connection> nodes(connected.size());
     // read messages from all peers
-    for (unsigned int i=0;i < peers.size();++i){
-        int peer = peers[i];
-        MSG_tree_leader_elect & msg_in = elect_messages[i];
-        reqs[i] = world.irecv(peer, msg_in.tag(), msg_in);
+    for (unsigned int i=0;i < nodes.size();++i){
+        Connection& node    = nodes[i];
+        node.node_rank      = connected[i];
+        node.got_message    = false;
+        node.req = world.irecv(node.node_rank, node.elect_message.tag(), node.elect_message);
     }
-    while(peers.size() > 1){
-        mpi::wait_some(reqs.begin(), reqs.end());
+    // set initial size for elect messages
+    int elect_messages_left =  nodes.size();
+    std::cout << "Start collecting messages" << std::endl;
+    while(elect_messages_left > 1){
+        // get all the outstanding requests
+        std::list<Connection>   outstanding_nodes;
+        std::list<mpi::request> outstanding_reqs;
+        for(unsigned int i=0;i < nodes.size();++i){
+            Connection node = nodes[i];
+            if(!node.got_message){
+                outstanding_node.push_front(node);
+                outstanding_reqs.push_front(node.req);
+            }
+        }
+        mpi::wait_some(outstanding_reqs.begin(), outstanding_reqs.end());
         // check if we got something
-        for (unsigned int i=0;i < reqs.size();++i){
-            mpi::request & req = reqs[i];
-            MSG_tree_leader_elect & msg_in = elect_messages[i];
+        for (unsigned int i=0;i < nodes.size();++i){
+            Connection& node = nodes[i];
+            mpi::request & req = node.req;
+            MSG_tree_leader_elect & msg_in = node.elect_message;
             if(req.test()){
                 // we got something
-                std::cout << "Msg from: "<< peers[i] << std::endl;
-                std::cout << "MSG:" << std::endl;
-                msg.print();
-                std::cout << "MSG_in:" << std::endl;
+                std::cout << "Msg from: "<< node.node_rank << std::endl;
                 msg_in.print();
                 // merge result 
                 msg.merge(msg_in);
-                peers.erase(peers.begin()+i);
-                reqs.erase(reqs.begin()+i);
-                elect_messages.erase(elect_messages.begin()+i);
+                // one more
+                node.got_message = true;
+                elect_messages_left--;
             }
         }
     }
-    std::cout << "Peers left: " << peers.size() << std::endl;
+    std::cout << "Stop collecting messages" << std::endl;
     // do I know the result?
-    if(peers.size() > 0){
+    if(elect_messages_left > 0){
         // nope: not yet
-        int leftover_peer = peers.front();
+        // get leftover peer
+        Connection *leftover_node;
+        for (unsigned int i=0;i < nodes.size();++i){
+            Connection& node = nodes[i];
+            if(node.got_message == true){
+                leftover_node = &node;
+            }
+        }
+        std::cout << "Sending my message" << std::endl;
         msg.print();
-        world.isend(leftover_peer, msg.tag(), msg);
+        world.isend(leftover_peer->node_rank, msg.tag(), msg);
         // receive propagate
         // wait for something to happen if we didn't already get something
-        if(!reqs[0].test()){
+        if(!leftover_peer->req.test()){
             mpi::wait_all(reqs.begin(), reqs.end());
         }
         // did we get a leader elect message?
