@@ -4,7 +4,7 @@
 #include <csignal>
 #include <cstdlib>
 
-inline void debug_break(){
+void debug_break(){
     raise(SIGINT);
 }
 

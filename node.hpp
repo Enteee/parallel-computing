@@ -62,12 +62,15 @@ public:
 */
 class Tree_node : public Node{
 private:
-    class Connection {
+    class Leader_elect_node {
+    public:
         int node_rank;
         MSG_tree_leader_elect elect_message;
         bool got_message;
         mpi::request req;
     };
+
+    std::vector < int > connected;
 
 protected:
     std::string get_info();

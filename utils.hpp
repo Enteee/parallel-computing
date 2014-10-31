@@ -2,7 +2,7 @@
 #define UTILS_HPP
 
 // break in the debugger when called
-inline void debug_break();
+void debug_break();
 
 // random generator function:
 int myrandom (int i);

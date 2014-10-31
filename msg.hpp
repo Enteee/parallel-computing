@@ -70,7 +70,7 @@ private:
         ar & connected;
     }
 public:
-    std::vector <int> connected;
+    std::vector < int > connected;
     int tag(){
         return MSG_TREE_CONNECT_TAG;
     }
