@@ -20,10 +20,9 @@
 Node::Node(){
     // set rank
     node_rank = std::rand() % NODE_MAX_RANK;
-#ifdef SEED
+    std::cout << "Nodeseed: " << SEED <<std::endl;
     // re-seed with default seed because mpi messes up random
     std::srand(SEED);
-#endif
 }
 
 void Node::print(){

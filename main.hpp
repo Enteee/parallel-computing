@@ -2,6 +2,8 @@
 
 #define NODE_TYPE Tree_node
 
+extern long SEED;
+
 /**
 * Define a random seed used in the application, use -D when compiling
 * #define SEED
