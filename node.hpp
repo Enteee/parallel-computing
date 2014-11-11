@@ -5,8 +5,11 @@
 #include <boost/mpi/communicator.hpp>
 
 #include "msg.hpp"
+#include "graph.hpp"
 
 #define NODE_MAX_RANK 50
+#define GRAPH_EDGE_ADD_CHANCE 0.5
+#define EDGE_MAX_WEIGHT 50
 
 using namespace boost;
 
@@ -52,6 +55,7 @@ public:
     void leader_elect();
 
 };
+
 /**
 * Node in a tree topology
 * 1 - 2 - 3
@@ -82,4 +86,32 @@ public:
 
 };
 
+/**
+* A Node in a graph topology
+* 1 - 2 - 3
+* |   |
+* 4 - 5 - 11 - 10
+* |       |    |
+* 6 - 7 - 8    9
+*/
+class Graph_node : public Node{
+private:
+    class Boruvka_elect_node {
+    public:
+        int node_rank;
+        MSG_tree_leader_elect elect_message;
+        bool got_message;
+        mpi::request req;
+    };
+
+    std::vector < Graph_edge > edges;
+
+protected:
+    std::string get_info();
+
+public:
+    Graph_node();
+    void boruvka_mst();
+    void leader_elect();
+};
 #endif

@@ -2,10 +2,13 @@
 #define MESSAGES_H
 #include <iostream>
 #include <cstdlib>
+#include <list>
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/export.hpp>
+
+#include "graph.hpp"
 
 using namespace boost;
 
@@ -94,4 +97,19 @@ public:
 BOOST_IS_MPI_DATATYPE(MSG_tree_leader_elect);
 //BOOST_CLASS_EXPORT(MSG_tree_leader_elect);
 
+#define MSG_GRAPH_CONNECT_TAG 3
+class MSG_graph_connect{
+private:
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version){
+        ar & edges;
+    }
+public:
+    std::vector < Graph_edge > edges;
+    int tag(){
+        return MSG_GRAPH_CONNECT_TAG;
+    }
+};
 #endif

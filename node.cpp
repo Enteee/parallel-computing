@@ -20,7 +20,6 @@
 Node::Node(){
     // set rank
     node_rank = std::rand() % NODE_MAX_RANK;
-    std::cout << "Nodeseed: " << SEED <<std::endl;
     // re-seed with default seed because mpi messes up random
     std::srand(SEED);
 }
@@ -223,4 +222,73 @@ void Tree_node::matrix_calc(){
     if(world.rank() == 0){
         matrix_out.print();
     }
+}
+
+Graph_node::Graph_node(){
+    if(world.rank() == 0){
+        // rank 0 build graph
+        std::vector< std::vector< Graph_edge > > edges(world.size());
+        for(int from=0;from<world.size();++from){
+            for(int to=0;to<world.size();++to){
+                if( from != to ){ // no self connections
+                    // check if this edge already exists
+                    bool edge_exists = false;
+                    std::vector< Graph_edge >& edges_from = edges[from];
+                    if(edges_from.size() > 0){
+                        for(std::vector< Graph_edge >::iterator it = edges_from.begin(); it != edges_from.end(); ++it){
+                            Graph_edge& edge_from = *it;
+                            if(edge_from.to == to){
+                                edge_exists = true;
+                                break;
+                            }
+                        }
+                    }
+                    // add new random edges
+                    if( !edge_exists &&
+                        (std::rand() / (double)RAND_MAX) < GRAPH_EDGE_ADD_CHANCE){
+                        int weight = std::rand() % EDGE_MAX_WEIGHT;
+                        // add edge for from
+                        Graph_edge edge_from;
+                        edge_from.to = to;
+                        edge_from.weight = weight;
+                        edges[from].push_back(edge_from);
+                        // add edge for to
+                        Graph_edge edge_to;
+                        edge_to.to = from;
+                        edge_to.weight = weight;
+                        edges[to].push_back(edge_to);
+                    }
+                }
+            }
+        }
+        // send information to all nodes
+        for(int node=0;node<world.size();node++){
+            std::vector< Graph_edge > node_edges = edges[node];
+            MSG_graph_connect msg;
+            msg.edges = node_edges;
+            world.send(node,msg.tag(),msg);
+        }
+    }
+    // listen for tree information from rank 0
+    MSG_graph_connect msg;
+    world.recv(0, msg.tag(), msg);
+    edges = msg.edges;
+}
+
+std::string Graph_node::get_info(){
+    std::ostringstream oss;
+    oss << "Connected to: ";
+    for (std::vector< Graph_edge >::iterator it = edges.begin(); it != edges.end(); ++it){
+        Graph_edge& edge = *it;
+        oss << "( " << edge.to << " ; " << edge.weight << " )";
+    }
+    
+    return oss.str();
+}
+
+void Graph_node::leader_elect(){
+    // TODO
+}
+
+void Graph_node::boruvka_mst(){
 }

@@ -1,6 +1,6 @@
 #ifndef MAIN_HPP
 
-#define NODE_TYPE Tree_node
+#define NODE_TYPE Graph_node
 
 extern long SEED;
 
