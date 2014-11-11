@@ -6,9 +6,12 @@
 #include <string>
 #include <sstream>
 #include <list>
+#include <iterator>
+#include <algorithm>
 
 #include <boost/mpi/nonblocking.hpp>
 #include <boost/mpi/collectives.hpp>
+#include <boost/range/adaptor/filtered.hpp>
 
 #include "main.hpp"
 #include "utils.hpp"
@@ -136,24 +139,22 @@ void Tree_node::leader_elect(){
     // set initial size for elect messages
     int elect_messages_left = nodes.size();
     std::cout << "Start collecting leader_elect messages" << std::endl;
+    // operator used for selecting nodes from which we didn't got a message
     while(elect_messages_left > 1){
         // get all the outstanding requests
-        unsigned int i = 0;
-        std::vector < Leader_elect_node > outstanding_nodes(elect_messages_left);
-        std::vector < mpi::request > outstanding_reqs(elect_messages_left);
-        for (std::vector< Leader_elect_node >::iterator it = nodes.begin(); it != nodes.end(); ++it){
-            Leader_elect_node& node = *it;
+        std::vector< Leader_elect_node >::iterator it = std::find_if(nodes.begin(), nodes.end(), [](Leader_elect_node& n ) { return ! n.got_message; });
+/*
+        std::list< mpi::request > reqs;
+        for(auto & node : nodes){
             if(!node.got_message){
-                std::cout << "Outstanding: " << node.node_rank << std::endl;
-                outstanding_nodes[i]    = node;
-                outstanding_reqs[i]     = node.req;
-                ++i;
+                reqs.push_back(node.req);
             }
         }
-debug_break();
         // wait until we get something
-        mpi::wait_some(outstanding_reqs.begin(), outstanding_reqs.end());
-        for (std::vector< Leader_elect_node >::iterator it = outstanding_nodes.begin(); it != outstanding_nodes.end(); ++it){
+        mpi::wait_some(reqs.begin(), reqs.end());
+*/
+//debug_break();
+        for (; it != nodes.end(); ++it){
             Leader_elect_node& node = *it;
             if(node.req.test()){
                 MSG_tree_leader_elect& msg_in = node.elect_message;

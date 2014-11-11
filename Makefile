@@ -12,10 +12,10 @@ TARGET_DIR=target
 
 #debug
 #SEED=1413838280
-SEED=1
+#SEED=1
 
 # MPI
-MPI_COMPILE_FLAGS=$(shell mpic++ --showme:compile) -O0
+MPI_COMPILE_FLAGS=$(shell mpic++ --showme:compile) -std=c++11 -O0
 MPI_LINK_FLAGS=$(shell mpic++ --showme:link)
 MPI_RUN_COPIES=3
 MPI_RUN_FLAGS=-n $(MPI_RUN_COPIES)
