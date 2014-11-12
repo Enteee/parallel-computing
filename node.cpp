@@ -219,6 +219,6 @@ void Graph_node::boruvka_mst(){
     msg.graph_nodes.insert(world.rank());
     std::cout << "Tree:" << std::endl;
     tree_node.print();
-//    tree_node.leader_elect(msg);
+    tree_node.leader_elect(msg);
 }
 

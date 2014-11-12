@@ -61,14 +61,6 @@ public:
 */
 class Tree_node : public Node{
 private:
-    class Leader_elect_node {
-    public:
-        int node_rank;
-        MSG_tree_leader_elect elect_message;
-        bool got_message;
-        mpi::request req;
-    };
-
     std::vector < int > connected;
 
 protected:
@@ -82,6 +74,14 @@ public:
 };
 
 template<class MLE> void Tree_node::leader_elect(MLE& msg){
+    class Leader_elect_node {
+    public:
+        int node_rank;
+        MLE elect_message;
+        bool got_message;
+        mpi::request req;
+    };
+
     msg.leader                      = world.rank();
     // vecot for all connected nodes
     std::vector< Leader_elect_node > nodes(connected.size());
@@ -98,7 +98,7 @@ template<class MLE> void Tree_node::leader_elect(MLE& msg){
     // operator used for selecting nodes from which we didn't got a message
     while(elect_messages_left > 1){
         // get all the outstanding requests
-        std::vector< Leader_elect_node >::iterator it = std::find_if(nodes.begin(), nodes.end(), [](Leader_elect_node& n ) { return ! n.got_message; });
+        typename std::vector< Leader_elect_node >::iterator it = std::find_if(nodes.begin(), nodes.end(), [](Leader_elect_node& n ) { return ! n.got_message; });
 /*
         std::list< mpi::request > reqs;
         for(auto & node : nodes){
