@@ -18,14 +18,14 @@
 #include "matrix.hpp"
 
 Node::Node(){
-    // set rank
-    node_rank = std::rand() % NODE_MAX_RANK;
+    // set random order
+    rnd_order = std::rand() % NODE_MAX_RND_ORDER;
     // re-seed with default seed because mpi messes up random
     std::srand(SEED);
 }
 
 void Node::print(){
-    std::cout << "[" << world.rank() << "] rank: " << node_rank << " " << get_info() << std::endl;
+    std::cout << "[" << world.rank() << "] order: " << rnd_order << " " << get_info() << std::endl;
 }
 
 Ring_node::Ring_node(){
@@ -43,11 +43,11 @@ void Ring_node::leader_elect(MSG_ring_leader_elect& msg){
     // perpare message
     msg.sender              = world.rank();
     msg.leader              = world.rank();
-    msg.leader_node_rank    = node_rank;
+    msg.leader_rnd_order    = rnd_order;
     MSG_ring_leader_elect msg_ring;
-    msg_ring.sender              = world.rank();
-    msg_ring.leader              = world.rank();
-    msg_ring.leader_node_rank    = node_rank;
+    msg_ring.sender             = world.rank();
+    msg_ring.leader             = world.rank();
+    msg_ring.leader_rnd_order   = rnd_order;
     do {
         // send message to ring
         world.send(next,msg_ring.tag(), msg_ring);
@@ -109,9 +109,13 @@ Tree_node::Tree_node(){
     connected = msg.connected;
 }
 
+Tree_node::Tree_node(std::vector< int > &connected){
+    this->connected = connected;
+}
+
 std::string Tree_node::get_info(){
     std::ostringstream oss;
-    oss << "Connected to: ";
+    oss << "connected to: ";
     for (std::vector< int >::iterator it = connected.begin(); it != connected.end(); ++it){
         oss << "( " << *it << " )";
     }
@@ -196,5 +200,25 @@ std::string Graph_node::get_info(){
 }
 
 void Graph_node::boruvka_mst(){
+    std::vector< int > tree;
+    Tree_node tree_node(tree);
+    MSG_graph_leader_elect msg;
+    // search min edge
+    Graph_edge min_edge;
+    min_edge.to = -1;
+    min_edge.weight = -1;
+    for(std::vector< Graph_edge >::iterator it = edges.begin(); it != edges.end(); ++it){
+        Graph_edge& edge = *it;
+        if(min_edge.to == -1
+        || edge.weight < min_edge.weight){
+            min_edge = edge;
+        }
+    }
+    msg.min_edge_weight         = min_edge.weight;
+    msg.min_edge_min_node_rank  = (world.rank() < min_edge.to ) ? world.rank() : min_edge.to;
+    msg.graph_nodes.insert(world.rank());
+    std::cout << "Tree:" << std::endl;
+    tree_node.print();
+//    tree_node.leader_elect(msg);
 }
 

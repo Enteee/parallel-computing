@@ -64,11 +64,13 @@ int main(int argc, char *argv[]){
         node.leader_elect(msg);
     }else if(mode.compare("MST") == 0){
         Graph_node node;
-
+        node.print();
+        node.boruvka_mst();
     }else{
         usage();
         return EXIT_FAILURE;
     }
 
+    std::cout << "Shutting down..." << std::endl;
     return EXIT_SUCCESS;
 }

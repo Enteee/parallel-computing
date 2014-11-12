@@ -7,8 +7,8 @@
 #include "msg.hpp"
 #include "graph.hpp"
 
-#define NODE_MAX_RANK 50
-#define GRAPH_EDGE_ADD_CHANCE 0.1
+#define NODE_MAX_RND_ORDER 50
+#define GRAPH_EDGE_ADD_CHANCE 0.9
 #define EDGE_MAX_WEIGHT 50
 
 using namespace boost;
@@ -22,8 +22,8 @@ private:
 protected:
     mpi::environment env;
     mpi::communicator world;
-    int node_rank;
     virtual std::string get_info() = 0;
+    int rnd_order;
 
 public:
     Node();
@@ -76,15 +76,13 @@ protected:
 
 public:
     Tree_node();
+    Tree_node(std::vector< int >& connected);
     template<class MLE> void leader_elect(MLE& msg);
     void matrix_calc();
-
 };
 
-// needs to be here because it's a template method
 template<class MLE> void Tree_node::leader_elect(MLE& msg){
     msg.leader                      = world.rank();
-    msg.leader_node_rank            = node_rank;
     // vecot for all connected nodes
     std::vector< Leader_elect_node > nodes(connected.size());
     // read messages from all peers
@@ -115,7 +113,7 @@ template<class MLE> void Tree_node::leader_elect(MLE& msg){
         for (; it != nodes.end(); ++it){
             Leader_elect_node& node = *it;
             if(node.req.test()){
-                MSG_tree_leader_elect& msg_in = node.elect_message;
+                MLE& msg_in = node.elect_message;
                 // we got something
                 std::cout << "Msg from: "<< node.node_rank << std::endl;
                 msg_in.print();
@@ -180,14 +178,6 @@ template<class MLE> void Tree_node::leader_elect(MLE& msg){
 */
 class Graph_node : public Node{
 private:
-    class Boruvka_elect_node {
-    public:
-        int node_rank;
-        MSG_tree_leader_elect elect_message;
-        bool got_message;
-        mpi::request req;
-    };
-
     std::vector < Graph_edge > edges;
 
 protected:

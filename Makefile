@@ -14,7 +14,7 @@ TARGET_DIR=target
 SET_SEED=1
 
 #Run
-MODE="TLE"
+MODE="MST"
 
 # MPI
 MPI_COMPILE_FLAGS=$(shell mpic++ --showme:compile) -std=c++11 -O0
