@@ -15,6 +15,7 @@ using namespace boost;
 /**
 * Parent class for all leader elect messages
 */
+template <class MLE>
 class MSG_leader_elect{
 private:
 
@@ -22,30 +23,21 @@ private:
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version){
         ar & leader;
-        ar & leader_node_rank;
     }
 
 public:
     int leader;
-    int leader_node_rank;
     virtual ~MSG_leader_elect(){};
     virtual int tag() = 0;
-    void merge(MSG_leader_elect &msg_other){
-        // merger the other message into the local one?
-        if(msg_other.leader_node_rank < leader_node_rank
-            || ( msg_other.leader_node_rank == leader_node_rank && msg_other.leader < leader)){
-            leader              = msg_other.leader;
-            leader_node_rank    = msg_other.leader_node_rank;
-        }
-    }
+    virtual void merge(MLE& msg_other) = 0; 
     void print(){
-        std::cout << "leader: " << leader << " node_rank: " << leader_node_rank << std::endl;
+        std::cout << "leader: " << leader << std::endl;
     }
 };
-BOOST_IS_MPI_DATATYPE(MSG_leader_elect);
+//BOOST_IS_MPI_DATATYPE(MSG_leader_elect);
 
 #define MSG_RING_LEADER_ELECT_TAG 0
-class MSG_ring_leader_elect : public MSG_leader_elect {
+class MSG_ring_leader_elect : public MSG_leader_elect<MSG_ring_leader_elect> {
 private:
     friend class boost::serialization::access;
 
@@ -53,11 +45,22 @@ private:
     void serialize(Archive & ar, const unsigned int version){
         ar & boost::serialization::base_object<MSG_leader_elect>(*this);
         ar & sender;
+        ar & leader_node_rank;
     }
 public:
     int sender;
+    int leader_node_rank;
     int tag(){
         return MSG_RING_LEADER_ELECT_TAG;
+    }
+    void merge(MSG_ring_leader_elect& msg_other){
+        // merger the other message into the local one?
+        if(msg_other.leader_node_rank < leader_node_rank
+            || ( msg_other.leader_node_rank == leader_node_rank && msg_other.leader < leader)){
+            // merge
+            leader              = msg_other.leader;
+            leader_node_rank    = msg_other.leader_node_rank;
+        }
     }
 };
 BOOST_IS_MPI_DATATYPE(MSG_ring_leader_elect);
@@ -80,18 +83,28 @@ public:
 };
 
 #define MSG_TREE_LEADER_ELECT_TAG 2
-class MSG_tree_leader_elect : public MSG_leader_elect {
+class MSG_tree_leader_elect : public MSG_leader_elect<MSG_tree_leader_elect> {
 private:
     friend class boost::serialization::access;
 
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version){
         ar & boost::serialization::base_object<MSG_leader_elect>(*this);
+        ar & leader_node_rank;
     }
-
 public:
+    int leader_node_rank;
     int tag(){
         return MSG_TREE_LEADER_ELECT_TAG;
+    }
+    void merge(MSG_tree_leader_elect& msg_other){
+        // merger the other message into the local one?
+        if(msg_other.leader_node_rank < leader_node_rank
+            || ( msg_other.leader_node_rank == leader_node_rank && msg_other.leader < leader)){
+            // merge
+            leader              = msg_other.leader;
+            leader_node_rank    = msg_other.leader_node_rank;
+        }
     }
 };
 BOOST_IS_MPI_DATATYPE(MSG_tree_leader_elect);

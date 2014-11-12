@@ -13,6 +13,9 @@ TARGET_DIR=target
 #seed
 SET_SEED=1
 
+#Run
+MODE="TLE"
+
 # MPI
 MPI_COMPILE_FLAGS=$(shell mpic++ --showme:compile) -std=c++11 -O0
 MPI_LINK_FLAGS=$(shell mpic++ --showme:link)
@@ -32,11 +35,11 @@ $(application): $(source_files)
 	$(CC) $(COMPILE_FLAGS) $(source_files) $(LINK_FLAGS) -o $(TARGET_DIR)/$(application)
 
 run: $(application)
-	mpirun $(MPI_RUN_FLAGS) $(MPI_RUN_TERMINAL) ./$(TARGET_DIR)/$(application)
+	mpirun $(MPI_RUN_FLAGS) $(MPI_RUN_TERMINAL) ./$(TARGET_DIR)/$(application) $(MODE)
 
 debug: COMPILE_FLAGS = $(DEBUG_COMPILE_FLAGS)
 debug: $(application)
-	mpirun $(MPI_RUN_FLAGS) $(MPI_RUN_DEBUG) ./$(TARGET_DIR)/$(application)
+	mpirun $(MPI_RUN_FLAGS) $(MPI_RUN_DEBUG) ./$(TARGET_DIR)/$(application) $(MODE)
 
 clean:
 	rm -rf $(TARGET_DIR)
