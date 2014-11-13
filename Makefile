@@ -20,7 +20,7 @@ ARGS=$(MODE)
 # MPI
 MPI_COMPILE_FLAGS=$(shell mpic++ --showme:compile) -std=c++11 -O0
 MPI_LINK_FLAGS=$(shell mpic++ --showme:link)
-MPI_RUN_COPIES=5
+MPI_RUN_COPIES=2
 MPI_RUN_FLAGS=-n $(MPI_RUN_COPIES)
 MPI_RUN_TERMINAL=$(TERMINAL) --hold -e
 MPI_RUN_DEBUG=$(MPI_RUN_TERMINAL) $(DEBUG) -q -ex 'run $(ARGS)'
