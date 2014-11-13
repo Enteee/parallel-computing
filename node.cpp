@@ -258,9 +258,11 @@ void Graph_node::boruvka_mst(){
             // add node
             msg.tree_nodes.insert(min_edge.to);
             tree_node.connected.push_back(min_edge.to);
-            std::cout << "grown" << std::endl;
         }
-debug_break();
     }while(msg.min_edge.to != -1);
+    std::cout << "Graph:" <<std::endl;
+    print();
+    std::cout << "MST:" << std::endl;
+    tree_node.print();
 }
 

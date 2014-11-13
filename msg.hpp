@@ -148,21 +148,24 @@ public:
         // expand mst
         tree_nodes.insert(msg_other.tree_nodes.begin(),msg_other.tree_nodes.end());
         // merge the other message into the local one?
-        // if we dont have a candidate
-        if( min_edge.to == -1
-            || (
-                // or the other one has a candidate
-                msg_other.min_edge.to != -1
-                // and candidate is not already in mst
-                && tree_nodes.count(msg_other.min_edge.to) < 1
-                && (
-                    // and candidate has min edge
-                    msg_other.min_edge.weight < min_edge.weight
-                    || ( 
-                        // or if both the same, the one with min_node_rank wins
-                        msg_other.min_edge.weight == min_edge.weight
-                        && msg_other.min_edge_min_node_rank < min_edge_min_node_rank
-                    )
+        if( (
+                // if our candidate is already in mst
+                tree_nodes.count(min_edge.to) > 0
+                || (
+                    // or the other has a candidate
+                    msg_other.min_edge.to != -1
+                    // which is new
+                    && tree_nodes.count(msg_other.min_edge.to) < 1
+                )
+            ) && (
+                // and we dont have a candidate
+                min_edge.to == -1
+                // or candidate has min edge
+                || msg_other.min_edge.weight < min_edge.weight
+                // or if both the same, the one with min_node_rank wins
+                || ( 
+                    msg_other.min_edge.weight == min_edge.weight
+                    && msg_other.min_edge_min_node_rank < min_edge_min_node_rank
                 )
             )
         ){
