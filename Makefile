@@ -25,7 +25,8 @@ MPI_RUN_FLAGS=-n $(MPI_RUN_COPIES)
 MPI_RUN_TERMINAL=$(TERMINAL) --hold -e
 MPI_RUN_DEBUG=$(MPI_RUN_TERMINAL) $(DEBUG) -q -ex 'run $(ARGS)'
 
-COMPILE_FLAGS:=-fdiagnostics-color $(MPI_COMPILE_FLAGS) -Wall
+#COMPILE_FLAGS:=-fdiagnostics-color $(MPI_COMPILE_FLAGS) -Wall
+COMPILE_FLAGS:= $(MPI_COMPILE_FLAGS) -Wall
 DEBUG_COMPILE_FLAGS:=$(COMPILE_FLAGS) -DSET_SEED=$(SET_SEED) -g
 LINK_FLAGS:=$(MPI_LINK_FLAGS) -lboost_mpi -lboost_serialization
 .PHONY: run debug
