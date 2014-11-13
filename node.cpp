@@ -109,8 +109,8 @@ Tree_node::Tree_node(){
     connected = msg.connected;
 }
 
-Tree_node::Tree_node(std::vector< int > &connected){
-    this->connected = connected;
+Tree_node::Tree_node(int num){
+    // do nothing
 }
 
 std::string Tree_node::get_info(){
@@ -212,12 +212,11 @@ void Graph_node::boruvka_mst(){
         mst_candidate.edge              = edges[i];
         mst_candidate.connected         = false;
     }
-    std::vector< int > tree_connected;
-    Tree_node tree_node(tree_connected);
+    // call constructor which does nothing
+    Tree_node tree_node(1);
     MSG_graph_leader_elect msg;
     do {
         // check if we have still candidates not connected
-        bool not_connected_candidates = false;
         Graph_edge min_edge;
         min_edge.to     = -1;
         min_edge.weight = -1;
@@ -226,7 +225,6 @@ void Graph_node::boruvka_mst(){
             if(msg.tree_nodes.count(mst_candidate.edge.to) > 0){
                 mst_candidate.connected = true;
             }else if(mst_candidate.connected == false){
-                not_connected_candidates = true;
                 if( min_edge.to == -1 // first
                     || mst_candidate.edge.weight < min_edge.weight
                 ){
@@ -234,16 +232,15 @@ void Graph_node::boruvka_mst(){
                 }
             }
         }
-        msg.min_edge_weight             = min_edge.weight;
+        msg.min_edge                    = min_edge;
         msg.min_edge_min_node_rank      = (world.rank() < min_edge.to ) ? world.rank() : min_edge.to;
-        msg.not_connected_candidates    = not_connected_candidates;
         msg.tree_nodes.insert(world.rank());
         // search where to grow mst
         std::cout << "Tree:" << std::endl;
         tree_node.print();
         tree_node.leader_elect(msg);
         // grow mst if i'm the leader
-        if( msg.not_connected_candidates == true
+        if( msg.min_edge.to != -1
             && msg.leader == world.rank() ){
             MSG_graph_mst_grow grow_message;
             // do i have to make the first step?
@@ -258,9 +255,12 @@ void Graph_node::boruvka_mst(){
                 world.recv(min_edge.to, grow_message.tag(), grow_message);
                 world.send(min_edge.to, grow_message.tag(), grow_message);
             }
-            tree_connected.push_back(min_edge.to);
+            // add node
+            msg.tree_nodes.insert(min_edge.to);
+            tree_node.connected.push_back(min_edge.to);
+            std::cout << "grown" << std::endl;
         }
 debug_break();
-    }while(msg.not_connected_candidates == true);
+    }while(msg.min_edge.to != -1);
 }
 

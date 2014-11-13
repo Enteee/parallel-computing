@@ -132,45 +132,44 @@ private:
     void serialize(Archive & ar, const unsigned int version){
         ar & boost::serialization::base_object<MSG_leader_elect>(*this);
         ar & leader;
-        ar & min_edge_weight;
+        ar & min_edge;
         ar & min_edge_min_node_rank;
         ar & tree_nodes;
-        ar & not_connected_candidates;
     }
 public:
     int leader;
-    int min_edge_weight;
+    Graph_edge min_edge;
     int min_edge_min_node_rank;
     std::set < int > tree_nodes;
-    bool not_connected_candidates;
     int tag(){
         return MSG_GRAPH_LEADER_ELECT_TAG;
     }
     void merge(MSG_graph_leader_elect& msg_other){
+        // expand mst
+        tree_nodes.insert(msg_other.tree_nodes.begin(),msg_other.tree_nodes.end());
         // merge the other message into the local one?
         // if we dont have a candidate
-        if( !not_connected_candidates 
+        if( min_edge.to == -1
             || (
                 // or the other one has a candidate
-                msg_other.not_connected_candidates
+                msg_other.min_edge.to != -1
+                // and candidate is not already in mst
+                && tree_nodes.count(msg_other.min_edge.to) < 1
                 && (
-                    // and other has min edge
-                    msg_other.min_edge_weight < min_edge_weight
+                    // and candidate has min edge
+                    msg_other.min_edge.weight < min_edge.weight
                     || ( 
                         // or if both the same, the one with min_node_rank wins
-                        msg_other.min_edge_weight == min_edge_weight
+                        msg_other.min_edge.weight == min_edge.weight
                         && msg_other.min_edge_min_node_rank < min_edge_min_node_rank
                     )
                 )
             )
         ){
             leader                      = msg_other.leader;
-            min_edge_weight             = msg_other.min_edge_weight;
+            min_edge                    = msg_other.min_edge;
             min_edge_min_node_rank      = msg_other.min_edge_min_node_rank;
-            not_connected_candidates    = msg_other.not_connected_candidates;
         }
-        // add all nodes from the node array
-        tree_nodes.insert(msg_other.tree_nodes.begin(),msg_other.tree_nodes.end());
     }
 };
 

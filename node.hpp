@@ -61,14 +61,14 @@ public:
 */
 class Tree_node : public Node{
 private:
-    std::vector < int > connected;
 
 protected:
     std::string get_info();
 
 public:
+    std::vector < int > connected;
     Tree_node();
-    Tree_node(std::vector< int >& connected);
+    Tree_node(int);
     template<class MLE> void leader_elect(MLE& msg);
     void matrix_calc();
 };
