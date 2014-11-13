@@ -134,28 +134,60 @@ private:
         ar & leader;
         ar & min_edge_weight;
         ar & min_edge_min_node_rank;
-        ar & graph_nodes;
+        ar & tree_nodes;
+        ar & not_connected_candidates;
     }
 public:
     int leader;
     int min_edge_weight;
     int min_edge_min_node_rank;
-    std::set < int > graph_nodes;
+    std::set < int > tree_nodes;
+    bool not_connected_candidates;
     int tag(){
         return MSG_GRAPH_LEADER_ELECT_TAG;
     }
     void merge(MSG_graph_leader_elect& msg_other){
-        // merger the other message into the local one?
-        if(msg_other.min_edge_weight < min_edge_weight
-            || ( msg_other.min_edge_weight == min_edge_weight && msg_other.min_edge_min_node_rank < min_edge_min_node_rank)){
-            // merge
-            leader                  = msg_other.leader;
-            min_edge_weight         = msg_other.min_edge_weight;
-            min_edge_min_node_rank  = msg_other.min_edge_min_node_rank;
+        // merge the other message into the local one?
+        // if we dont have a candidate
+        if( !not_connected_candidates 
+            || (
+                // or the other one has a candidate
+                msg_other.not_connected_candidates
+                && (
+                    // and other has min edge
+                    msg_other.min_edge_weight < min_edge_weight
+                    || ( 
+                        // or if both the same, the one with min_node_rank wins
+                        msg_other.min_edge_weight == min_edge_weight
+                        && msg_other.min_edge_min_node_rank < min_edge_min_node_rank
+                    )
+                )
+            )
+        ){
+            leader                      = msg_other.leader;
+            min_edge_weight             = msg_other.min_edge_weight;
+            min_edge_min_node_rank      = msg_other.min_edge_min_node_rank;
+            not_connected_candidates    = msg_other.not_connected_candidates;
         }
         // add all nodes from the node array
-        graph_nodes.insert(msg_other.graph_nodes.begin(),msg_other.graph_nodes.end());
+        tree_nodes.insert(msg_other.tree_nodes.begin(),msg_other.tree_nodes.end());
     }
 };
+
+#define MSG_GRAPH_MST_GROW 5
+class MSG_graph_mst_grow{
+private:
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version){
+        // do nothing
+    }
+public:
+    int tag(){
+        return MSG_GRAPH_MST_GROW;
+    }
+};
+BOOST_IS_MPI_DATATYPE(MSG_graph_mst_grow);
 
 #endif

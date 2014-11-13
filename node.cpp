@@ -200,25 +200,67 @@ std::string Graph_node::get_info(){
 }
 
 void Graph_node::boruvka_mst(){
-    std::vector< int > tree;
-    Tree_node tree_node(tree);
-    MSG_graph_leader_elect msg;
-    // search min edge
-    Graph_edge min_edge;
-    min_edge.to = -1;
-    min_edge.weight = -1;
-    for(std::vector< Graph_edge >::iterator it = edges.begin(); it != edges.end(); ++it){
-        Graph_edge& edge = *it;
-        if(min_edge.to == -1
-        || edge.weight < min_edge.weight){
-            min_edge = edge;
-        }
+    // listen on all graph edges for mst_grow messages
+    class Mst_candidate {
+        public:
+            Graph_edge edge;
+            bool connected;
+    };
+    std::vector< Mst_candidate > mst_candidates(edges.size());
+    for(unsigned int i = 0; i < edges.size();++i){
+        Mst_candidate& mst_candidate    = mst_candidates[i];
+        mst_candidate.edge              = edges[i];
+        mst_candidate.connected         = false;
     }
-    msg.min_edge_weight         = min_edge.weight;
-    msg.min_edge_min_node_rank  = (world.rank() < min_edge.to ) ? world.rank() : min_edge.to;
-    msg.graph_nodes.insert(world.rank());
-    std::cout << "Tree:" << std::endl;
-    tree_node.print();
-    tree_node.leader_elect(msg);
+    std::vector< int > tree_connected;
+    Tree_node tree_node(tree_connected);
+    MSG_graph_leader_elect msg;
+    do {
+        // check if we have still candidates not connected
+        bool not_connected_candidates = false;
+        Graph_edge min_edge;
+        min_edge.to     = -1;
+        min_edge.weight = -1;
+        for(std::vector< Mst_candidate >::iterator it = mst_candidates.begin();it != mst_candidates.end();++it){
+            Mst_candidate& mst_candidate = *it;
+            if(msg.tree_nodes.count(mst_candidate.edge.to) > 0){
+                mst_candidate.connected = true;
+            }else if(mst_candidate.connected == false){
+                not_connected_candidates = true;
+                if( min_edge.to == -1 // first
+                    || mst_candidate.edge.weight < min_edge.weight
+                ){
+                    min_edge = mst_candidate.edge;
+                }
+            }
+        }
+        msg.min_edge_weight             = min_edge.weight;
+        msg.min_edge_min_node_rank      = (world.rank() < min_edge.to ) ? world.rank() : min_edge.to;
+        msg.not_connected_candidates    = not_connected_candidates;
+        msg.tree_nodes.insert(world.rank());
+        // search where to grow mst
+        std::cout << "Tree:" << std::endl;
+        tree_node.print();
+        tree_node.leader_elect(msg);
+        // grow mst if i'm the leader
+        if( msg.not_connected_candidates == true
+            && msg.leader == world.rank() ){
+            MSG_graph_mst_grow grow_message;
+            // do i have to make the first step?
+            if(msg.min_edge_min_node_rank == world.rank()){
+                // yes i'm the man!
+                std::cout << "Growing mst (master) to: " << min_edge.to << std::endl;
+                world.send(min_edge.to, grow_message.tag(), grow_message);
+                world.recv(min_edge.to, grow_message.tag(), grow_message);
+            }else{
+                // nope, others have to buy me drinks.
+                std::cout << "Growing mst (slave) to: " << min_edge.to << std::endl;
+                world.recv(min_edge.to, grow_message.tag(), grow_message);
+                world.send(min_edge.to, grow_message.tag(), grow_message);
+            }
+            tree_connected.push_back(min_edge.to);
+        }
+debug_break();
+    }while(msg.not_connected_candidates == true);
 }
 

@@ -14,7 +14,7 @@ TARGET_DIR=target
 SET_SEED=1
 
 #Run
-MODE=TLE
+MODE=MST
 ARGS=$(MODE)
 
 # MPI
