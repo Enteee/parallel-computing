@@ -8,7 +8,7 @@
 #include "graph.hpp"
 
 #define NODE_MAX_RND_ORDER 50
-#define GRAPH_EDGE_ADD_CHANCE 0.9
+#define GRAPH_EDGE_ADD_CHANCE 0.1
 #define EDGE_MAX_WEIGHT 50
 
 using namespace boost;
