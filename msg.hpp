@@ -25,13 +25,15 @@ private:
         ar & leader;
     }
 
+    virtual std::string get_info() = 0;
+
 public:
     int leader;
     virtual ~MSG_leader_elect(){};
     virtual int tag() = 0;
     virtual void merge(MLE& msg_other) = 0; 
     void print(){
-        std::cout << "leader: " << leader << std::endl;
+        std::cout << "leader: " << leader << " " << get_info() << std::endl;
     }
 };
 //BOOST_IS_MPI_DATATYPE(MSG_leader_elect);
@@ -47,6 +49,13 @@ private:
         ar & sender;
         ar & leader_rnd_order;
     }
+
+    std::string get_info(){
+        std::ostringstream oss;
+        oss << "leader_rnd_order: " << leader_rnd_order;
+        return oss.str();
+    }
+
 public:
     int sender;
     int leader_rnd_order;
@@ -89,7 +98,15 @@ private:
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version){
         ar & boost::serialization::base_object<MSG_leader_elect>(*this);
+        ar & leader_rnd_order;
     }
+
+    std::string get_info(){
+        std::ostringstream oss;
+        oss << "leader_rnd_order: " << leader_rnd_order;
+        return oss.str();
+    }
+
 public:
     int leader_rnd_order;
     int tag(){
@@ -135,6 +152,19 @@ private:
         ar & min_edge;
         ar & min_edge_min_node_rank;
         ar & tree_nodes;
+    }
+
+    std::string get_info(){
+        std::ostringstream oss;
+        oss <<  "leader: " << leader << 
+                "min_edge.to: " << min_edge.to <<
+                "min_edge.weight: " << min_edge.weight <<
+                "min_edge_min_node_rank: " << min_edge_min_node_rank <<
+                "tree_nodes: ";
+        for(std::set< int >::iterator it = tree_nodes.begin(); it != tree_nodes.end(); ++it){
+            oss << "( " << *it << " )";
+        }
+        return oss.str();
     }
 public:
     int leader;

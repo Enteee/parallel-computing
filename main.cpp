@@ -14,6 +14,8 @@
 #include "utils.hpp"
 
 long SEED;
+mpi::environment env;
+mpi::communicator world;
 
 void usage(){
     std::cout << 
@@ -72,6 +74,8 @@ int main(int argc, char *argv[]){
         Tree_node node(scenario);
         MSG_tree_leader_elect msg;
         node.print();
+        msg.leader = world.rank();
+        msg.leader_rnd_order = node.rnd_order;
         node.leader_elect(msg);
     }else if(mode.compare("MST") == 0){
         Graph_node node(scenario);

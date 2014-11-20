@@ -1,17 +1,13 @@
 #ifndef NODE_HPP
 #define NODE_HPP
 
-#include <boost/mpi/environment.hpp>
-#include <boost/mpi/communicator.hpp>
-
+#include "main.hpp"
 #include "msg.hpp"
 #include "graph.hpp"
 
 #define NODE_MAX_RND_ORDER 50
 #define GRAPH_EDGE_ADD_CHANCE 0.9
 #define EDGE_MAX_WEIGHT 50
-
-using namespace boost;
 
 /**
 * Basic node
@@ -20,12 +16,11 @@ class Node {
 private:
 
 protected:
-    mpi::environment env;
-    mpi::communicator world;
     virtual std::string get_info() = 0;
-    int rnd_order;
 
 public:
+    int rnd_order;
+
     Node();
     void print();
 };
@@ -82,6 +77,8 @@ template<class MLE> void Tree_node::leader_elect(MLE& msg){
         bool got_message;
         mpi::request req;
     };
+    std::cout << "Tree leader elect with:" << std::endl;
+    msg.print();
 
     msg.leader                      = world.rank();
     // vecot for all connected nodes
@@ -113,7 +110,7 @@ template<class MLE> void Tree_node::leader_elect(MLE& msg){
 //debug_break();
         for (; it != nodes.end(); ++it){
             Leader_elect_node& node = *it;
-            if(node.req.test()){
+            if(node.req.test() && node.got_message == false){
                 MLE& msg_in = node.elect_message;
                 // we got something
                 std::cout << "Msg from: "<< node.node_rank << std::endl;
