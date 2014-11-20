@@ -203,6 +203,61 @@ Graph_node::Graph_node(int scenario){
                     world.send(node,msg.tag(),msg);
                 }
             break;
+            case 1:{
+                /*
+                * our default graph:   
+                *         [0]    [1]             [2]    
+                *        /  |   /    \          /  |
+                *      7   16  2      10      13   9
+                *     /     | /          \   /     |
+                *  [3]__3__[4]__5__[5]_18_[6]__12__[7] 
+                *     \     | \     |    / \        \
+                *      1   15  6    17  4   19      14
+                *        \  |    \  | /      \        \ 
+                *          [8]_13__[9]__8__[10]__11__[11]
+                *
+                *
+                *  weight matrix 
+                * (similar to adjacency matrix but with the
+                * following meaning: 
+                * if (m[i][k] == 0) --> no edge between node i and node k
+                * else there is an edge with weight  = m[i][k]
+                */
+                
+                int admat[12][12] = { 
+                    // 0   1   2   3   4   5   6   7   8   9  10  11
+                    {  0,  0,  0,  7, 16,  0,  0,  0,  0,  0,  0,  0}, // 0
+                    {  0,  0,  0,  0,  2,  0, 10,  0,  0,  0,  0,  0}, // 1
+                    {  0,  0,  0,  0,  0,  0, 13,  9,  0,  0,  0,  0}, // 2
+                    {  7,  0,  0,  0,  3,  0,  0,  0,  1,  0,  0,  0}, // 3 
+                    { 16,  2,  0,  3,  0,  5,  0,  0, 15,  6,  0,  0}, // 4
+                    {  0,  0,  0,  0,  5,  0, 18,  0,  0, 17,  0,  0}, // 5
+                    {  0, 10, 13,  0,  0, 18,  0, 12,  0,  4, 19,  0}, // 6
+                    {  0,  0,  9,  0,  0,  0, 12,  0,  0,  0,  0, 14}, // 7
+                    {  0,  0,  0,  1, 15,  0,  0,  0,  0, 13,  0,  0}, // 8
+                    {  0,  0,  0,  0,  6, 17,  4,  0, 13,  0,  8,  0}, // 9
+                    {  0,  0,  0,  0,  0,  0, 19,  0,  0,  8,  0, 11}, //10
+                    {  0,  0,  0,  0,  0,  0,  0, 14,  0,  0, 11,  0}, //11
+                };  
+                if(world.size() > 12){
+                    std::cerr << "MPI cluster too big for this scenario";
+                    exit(EXIT_FAILURE);
+                }
+                for(int node=0;node<world.size();node++){
+                    MSG_graph_connect msg;
+                    for(int to_node=0;to_node<world.size();to_node++){
+                        int weight = admat[node][to_node];
+                        if(weight > 0){
+                            Graph_edge edge;
+                            edge.to = to_node;
+                            edge.weight = weight;
+                            msg.edges.push_back(edge);
+                        }
+                    }
+                    world.send(node,msg.tag(),msg);
+                }
+            }
+            break;
         }
     }
     // listen for tree information from rank 0

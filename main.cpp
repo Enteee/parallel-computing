@@ -63,7 +63,7 @@ int main(int argc, char *argv[]){
         node.print();
         node.leader_elect(msg);
     }else if(mode.compare("MST") == 0){
-        Graph_node node;
+        Graph_node node(1);
         node.print();
         node.boruvka_mst();
     }else{
