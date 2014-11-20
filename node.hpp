@@ -67,8 +67,9 @@ protected:
 
 public:
     std::vector < int > connected;
-    Tree_node();
-    Tree_node(int);
+    Tree_node(int scenario);
+    Tree_node() : Tree_node(-1){};
+    
     template<class MLE> void leader_elect(MLE& msg);
     void matrix_calc();
 };
@@ -184,7 +185,8 @@ protected:
     std::string get_info();
 
 public:
-    Graph_node();
+    Graph_node(int scenario);
+    Graph_node() : Graph_node(-1){};
     void boruvka_mst();
 };
 #endif

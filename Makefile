@@ -14,9 +14,9 @@ TARGET_DIR=target
 SET_SEED=1
 
 #Run
-MODE=MST
+MODE=RLE
 ARGS=$(MODE)
-RUN_COPIES=2
+RUN_COPIES=5
 
 # MPI
 MPI_COMPILE_FLAGS=$(shell mpic++ --showme:compile) -std=c++11 -O0
@@ -45,7 +45,7 @@ BASE_MPI_RUN_ARGS=$(ARGS)
 MPI_RUN_ARGS=$(BASE_MPI_RUN_ARGS)
 DEBUG_MPI_RUN_ARGS=
 
-.PHONY: run debug
+.PHONY: run debug test
 
 $(application): $(source_files)
 	mkdir -p $(TARGET_DIR)
@@ -61,6 +61,13 @@ debug: MPI_RUN_TERMINAL=$(DEBUG_MPI_RUN_TERMINAL)
 debug: MPI_RUN_APPLICATION=$(DEBUG_MPI_RUN_APPLICATION)
 debug: MPI_RUN_ARGS=$(DEBUG_MPI_RUN_ARGS)
 debug: $(application) run
+
+test: MODE=RLE
+test: run
+test: MODE=TLE
+test: run
+test: MODE=MST
+test: run
 
 clean:
 	rm -rf $(TARGET_DIR)

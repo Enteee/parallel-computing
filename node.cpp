@@ -58,59 +58,68 @@ void Ring_node::leader_elect(MSG_ring_leader_elect& msg){
     std::cout << "Leader: " << msg.leader << std::endl;
 }
 
-Tree_node::Tree_node(){
+Tree_node::Tree_node(int scenario){
+    // rank 0 build tree
     if(world.rank() == 0){
-        // rank 0 build tree
-        std::vector< std::vector< int > > levels;
-        std::vector< int > nodes;
-        std::vector< std::vector<int> > connections(world.size());
-        for(int i=0;i<world.size();i++){
-            nodes.push_back(i);
-        }
-        std::random_shuffle( nodes.begin(), nodes.end(), myrandom );
-        // level 0 must only have 1 node
-        std::vector< int > l0;
-        l0.insert(l0.begin(),nodes.front());
-        levels.insert(levels.begin(),l0); 
-        // iterate over all other nodes
-        for (std::vector< int >::iterator it = nodes.begin()+1; it != nodes.end(); ++it){
-            int add_level = rand() % levels.size();
-            if(add_level == 0){ // we can't add to root -> add new level
-                std::vector < int > l_new;
-                levels.insert(levels.end(),l_new);
-                add_level = (levels.size()-1);
+        switch(scenario){
+            case -1:{
+                std::vector< std::vector< int > > levels;
+                std::vector< int > nodes;
+                std::vector< std::vector<int> > connections(world.size());
+                for(int i=0;i<world.size();i++){
+                    nodes.push_back(i);
+                }
+                std::random_shuffle( nodes.begin(), nodes.end(), myrandom );
+                // level 0 must only have 1 node
+                std::vector< int > l0;
+                l0.insert(l0.begin(),nodes.front());
+                levels.insert(levels.begin(),l0); 
+                // iterate over all other nodes
+                for (std::vector< int >::iterator it = nodes.begin()+1; it != nodes.end(); ++it){
+                    int add_level = rand() % levels.size();
+                    if(add_level == 0){ // we can't add to root -> add new level
+                        std::vector < int > l_new;
+                        levels.insert(levels.end(),l_new);
+                        add_level = (levels.size()-1);
+                    }
+                    levels[add_level].push_back(*it);
+                }
+                // connect levels
+                for (std::vector< std::vector< int > >::reverse_iterator levels_it = levels.rbegin(); (levels_it+1) != levels.rend(); ++levels_it){
+                    std::vector< int > level_l = *levels_it;
+                    std::vector< int > level_h = *(levels_it+1);
+                    for (std::vector< int >::iterator nodes_it = level_l.begin(); nodes_it != level_l.end(); ++nodes_it){
+                        // connect node to a random node from higher level
+                        int node_l = *nodes_it;
+                        int node_h = level_h[std::rand() % level_h.size()];
+                        connections[node_l].push_back(node_h);
+                        connections[node_h].push_back(node_l);
+                    }
+                }
+                // send information to all nodes
+                for (std::vector< int >::iterator it = nodes.begin(); it != nodes.end(); ++it){
+                    int node = *it;
+                    MSG_tree_connect msg;
+                    msg.connected = connections[node];
+                    world.send(node,msg.tag(),msg);
+                }
             }
-            levels[add_level].push_back(*it);
+            break;
+            default:
+            case 0:
+                // do nothing
+                // send information to all nodes
+                for(int node=0;node<world.size();node++){
+                    MSG_tree_connect msg;
+                    world.send(node,msg.tag(),msg);
+                }
+            break;
         }
-        // connect levels
-        for (std::vector< std::vector< int > >::reverse_iterator levels_it = levels.rbegin(); (levels_it+1) != levels.rend(); ++levels_it){
-            std::vector< int > level_l = *levels_it;
-            std::vector< int > level_h = *(levels_it+1);
-            for (std::vector< int >::iterator nodes_it = level_l.begin(); nodes_it != level_l.end(); ++nodes_it){
-                // connect node to a random node from higher level
-                int node_l = *nodes_it;
-                int node_h = level_h[std::rand() % level_h.size()];
-                connections[node_l].push_back(node_h);
-                connections[node_h].push_back(node_l);
-            }
-        }
-        // send information to all nodes
-        for (std::vector< int >::iterator it = nodes.begin(); it != nodes.end(); ++it){
-            int node = *it;
-            MSG_tree_connect msg;
-            msg.connected = connections[node];
-            world.send(node,msg.tag(),msg);
-        }
-        
     }
     // listen for tree information from rank 0
     MSG_tree_connect msg;
     world.recv(0, msg.tag(), msg);
     connected = msg.connected;
-}
-
-Tree_node::Tree_node(int num){
-    // do nothing
 }
 
 std::string Tree_node::get_info(){
@@ -137,49 +146,63 @@ void Tree_node::matrix_calc(){
     }
 }
 
-Graph_node::Graph_node(){
+Graph_node::Graph_node(int scenario){
     if(world.rank() == 0){
-        // rank 0 build graph
-        std::vector< std::vector< Graph_edge > > edges(world.size());
-        for(int from=0;from<world.size();++from){
-            for(int to=0;to<world.size();++to){
-                if( from != to ){ // no self connections
-                    // check if this edge already exists
-                    bool edge_exists = false;
-                    std::vector< Graph_edge >& edges_from = edges[from];
-                    if(edges_from.size() > 0){
-                        for(std::vector< Graph_edge >::iterator it = edges_from.begin(); it != edges_from.end(); ++it){
-                            Graph_edge& edge_from = *it;
-                            if(edge_from.to == to){
-                                edge_exists = true;
-                                break;
+        switch(scenario){
+            case -1:{
+                // rank 0 build graph
+                std::vector< std::vector< Graph_edge > > edges(world.size());
+                for(int from=0;from<world.size();++from){
+                    for(int to=0;to<world.size();++to){
+                        if( from != to ){ // no self connections
+                            // check if this edge already exists
+                            bool edge_exists = false;
+                            std::vector< Graph_edge >& edges_from = edges[from];
+                            if(edges_from.size() > 0){
+                                for(std::vector< Graph_edge >::iterator it = edges_from.begin(); it != edges_from.end(); ++it){
+                                    Graph_edge& edge_from = *it;
+                                    if(edge_from.to == to){
+                                        edge_exists = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            // add new random edges
+                            if( !edge_exists &&
+                                (std::rand() / (double)RAND_MAX) < GRAPH_EDGE_ADD_CHANCE){
+                                int weight = std::rand() % EDGE_MAX_WEIGHT;
+                                // add edge for from
+                                Graph_edge edge_from;
+                                edge_from.to = to;
+                                edge_from.weight = weight;
+                                edges[from].push_back(edge_from);
+                                // add edge for to
+                                Graph_edge edge_to;
+                                edge_to.to = from;
+                                edge_to.weight = weight;
+                                edges[to].push_back(edge_to);
                             }
                         }
                     }
-                    // add new random edges
-                    if( !edge_exists &&
-                        (std::rand() / (double)RAND_MAX) < GRAPH_EDGE_ADD_CHANCE){
-                        int weight = std::rand() % EDGE_MAX_WEIGHT;
-                        // add edge for from
-                        Graph_edge edge_from;
-                        edge_from.to = to;
-                        edge_from.weight = weight;
-                        edges[from].push_back(edge_from);
-                        // add edge for to
-                        Graph_edge edge_to;
-                        edge_to.to = from;
-                        edge_to.weight = weight;
-                        edges[to].push_back(edge_to);
-                    }
+                }
+                // send information to all nodes
+                for(int node=0;node<world.size();node++){
+                    std::vector< Graph_edge > node_edges = edges[node];
+                    MSG_graph_connect msg;
+                    msg.edges = node_edges;
+                    world.send(node,msg.tag(),msg);
                 }
             }
-        }
-        // send information to all nodes
-        for(int node=0;node<world.size();node++){
-            std::vector< Graph_edge > node_edges = edges[node];
-            MSG_graph_connect msg;
-            msg.edges = node_edges;
-            world.send(node,msg.tag(),msg);
+            break;
+            default:
+            case 0:
+                // do nothing
+                // send information to all nodes
+                for(int node=0;node<world.size();node++){
+                    MSG_graph_connect msg;
+                    world.send(node,msg.tag(),msg);
+                }
+            break;
         }
     }
     // listen for tree information from rank 0
@@ -213,7 +236,7 @@ void Graph_node::boruvka_mst(){
         mst_candidate.connected         = false;
     }
     // call constructor which does nothing
-    Tree_node tree_node(1);
+    Tree_node tree_node(0);
     MSG_graph_leader_elect msg;
     do {
         // check if we have still candidates not connected

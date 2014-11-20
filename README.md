@@ -20,3 +20,5 @@ $ make run
 ## Debug
 
 $ make debug
+
+## BUGS
