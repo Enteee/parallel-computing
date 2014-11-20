@@ -14,9 +14,10 @@ TARGET_DIR=target
 SET_SEED=1
 
 #Run
+RUN_COPIES=3
 MODE=MST
-ARGS=$(MODE)
-RUN_COPIES=5
+SCENARIO=1
+ARGS=$(MODE) $(SCENARIO)
 
 # MPI
 MPI_COMPILE_FLAGS=$(shell mpic++ --showme:compile) -std=c++11 -O0
@@ -25,7 +26,7 @@ COMPILE_FLAGS=$(BASE_COMPILE_FLAGS)
 DEBUG_COMPILE_FLAGS=$(BASE_COMPILE_FLAGS) -DSET_SEED=$(SET_SEED) -g
 
 MPI_LINK_FLAGS=$(shell mpic++ --showme:link)
-BASE_LINK_FLAGS=$(MPI_LINK_FLAGS) -lboost_mpi -lboost_serialization
+BASE_LINK_FLAGS=$(MPI_LINK_FLAGS) -lboost_mpi -lboost_serialization -lSegFault
 LINK_FLAGS=$(BASE_LINK_FLAGS)
 DEBUG_LINK_FLAGS=$(BASE_LINK_FLAGS)
 
@@ -45,7 +46,7 @@ BASE_MPI_RUN_ARGS=$(ARGS)
 MPI_RUN_ARGS=$(BASE_MPI_RUN_ARGS)
 DEBUG_MPI_RUN_ARGS=
 
-.PHONY: run debug test
+.PHONY: run debug
 
 $(application): $(source_files)
 	mkdir -p $(TARGET_DIR)
@@ -61,13 +62,6 @@ debug: MPI_RUN_TERMINAL=$(DEBUG_MPI_RUN_TERMINAL)
 debug: MPI_RUN_APPLICATION=$(DEBUG_MPI_RUN_APPLICATION)
 debug: MPI_RUN_ARGS=$(DEBUG_MPI_RUN_ARGS)
 debug: $(application) run
-
-test: MODE=RLE
-test: run
-test: MODE=TLE
-test: run
-test: MODE=MST
-test: run
 
 clean:
 	rm -rf $(TARGET_DIR)

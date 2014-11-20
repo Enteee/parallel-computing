@@ -18,13 +18,18 @@ long SEED;
 void usage(){
     std::cout << 
     "Usage: " << std::endl <<
-    "   parallel MODE" << std::endl <<
+    "   parallel MODE [SCENARIO]" << std::endl <<
     std::endl <<
     "Arguments:" << std::endl <<
     "   MODE : operation mode of program" << std::endl <<
     "           RLE : Ring leader elect" << std::endl <<
     "           TLE : Tree leader elect" << std::endl <<
-    "           MST : Minimal spannig tree" << std::endl;
+    "           MST : Minimal spannig tree" << std::endl <<
+    "optional Arguments:" << std::endl <<
+    "   SCENARIO : scenario used, only for TLE and MST" << std::endl <<
+    "           -1 : Random scenario (default)" << std::endl <<
+    "           0  : Empty scenario" << std::endl <<
+    "           >0 : Custom scenario" << std::endl;
 }
 
 /**
@@ -32,11 +37,17 @@ void usage(){
 */
 int main(int argc, char *argv[]){
 
-    if(argc != 2){
+    if(argc < 2){
         usage();
         return EXIT_FAILURE;
     }
     std::string mode = std::string(argv[1]);
+    std::cout << "Mode: " << mode << std::endl;
+    int scenario = DEFAULT_SCENARIO;
+    if(argc > 2){
+//        scenario = std::stoi(std::string(argv[2]));
+    }
+    std::cout << "Scenario: " << scenario << std::endl;
 
 #ifndef SET_SEED
     // from : http://stackoverflow.com/questions/8920411/possible-sources-for-random-number-seeds
@@ -58,12 +69,12 @@ int main(int argc, char *argv[]){
         node.print();
         node.leader_elect(msg);
     }else if(mode.compare("TLE") == 0){
-        Tree_node node;
+        Tree_node node(scenario);
         MSG_tree_leader_elect msg;
         node.print();
         node.leader_elect(msg);
     }else if(mode.compare("MST") == 0){
-        Graph_node node(1);
+        Graph_node node(scenario);
         node.print();
         node.boruvka_mst();
     }else{
