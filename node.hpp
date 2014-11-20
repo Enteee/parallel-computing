@@ -77,6 +77,7 @@ template<class MLE> void Tree_node::leader_elect(MLE& msg){
         bool got_message;
         mpi::request req;
     };
+    msg.leader = world.rank(); // assume i'm the leader
     std::cout << "Tree leader elect with:" << std::endl;
     msg.print();
 
@@ -163,7 +164,7 @@ template<class MLE> void Tree_node::leader_elect(MLE& msg){
             world.send(*it, msg.tag(), msg);
         }
     }
-    std::cout << "Leader: " << msg.leader << std::endl;
+    msg.print();
 }
 
 /**

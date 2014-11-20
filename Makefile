@@ -14,16 +14,16 @@ TARGET_DIR=target
 SET_SEED=1
 
 #Run
-RUN_COPIES=12
-MODE=TLE
+RUN_COPIES=5
+MODE=MST
 SCENARIO=1
 ARGS=$(MODE) $(SCENARIO)
 
 # MPI
-MPI_COMPILE_FLAGS=$(shell mpic++ --showme:compile) -std=c++11 -O0
-BASE_COMPILE_FLAGS=-fdiagnostics-color $(MPI_COMPILE_FLAGS) -Wall
+MPI_COMPILE_FLAGS=$(shell mpic++ --showme:compile)
+BASE_COMPILE_FLAGS=-fdiagnostics-color $(MPI_COMPILE_FLAGS) -Wall -std=c++11
 COMPILE_FLAGS=$(BASE_COMPILE_FLAGS)
-DEBUG_COMPILE_FLAGS=$(BASE_COMPILE_FLAGS) -DSET_SEED=$(SET_SEED) -g
+DEBUG_COMPILE_FLAGS=$(BASE_COMPILE_FLAGS) -O0 -DSET_SEED=$(SET_SEED) -g
 
 MPI_LINK_FLAGS=$(shell mpic++ --showme:link)
 BASE_LINK_FLAGS=$(MPI_LINK_FLAGS) -lboost_mpi -lboost_serialization -lSegFault
@@ -46,7 +46,7 @@ BASE_MPI_RUN_ARGS=$(ARGS)
 MPI_RUN_ARGS=$(BASE_MPI_RUN_ARGS)
 DEBUG_MPI_RUN_ARGS=
 
-.PHONY: run debug
+.PHONY: run debug rundebug
 
 $(application): $(source_files)
 	mkdir -p $(TARGET_DIR)
@@ -62,6 +62,12 @@ debug: MPI_RUN_TERMINAL=$(DEBUG_MPI_RUN_TERMINAL)
 debug: MPI_RUN_APPLICATION=$(DEBUG_MPI_RUN_APPLICATION)
 debug: MPI_RUN_ARGS=$(DEBUG_MPI_RUN_ARGS)
 debug: $(application) run
+
+rundebug: MPI_RUN_FLAGS=$(DEBUG_MPI_RUN_FLAGS)
+rundebug: MPI_RUN_TERMINAL=$(DEBUG_MPI_RUN_TERMINAL)
+rundebug: MPI_RUN_APPLICATION=$(DEBUG_MPI_RUN_APPLICATION)
+rundebug: MPI_RUN_ARGS=$(DEBUG_MPI_RUN_ARGS)
+rundebug: run
 
 clean:
 	rm -rf $(TARGET_DIR)

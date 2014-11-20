@@ -156,18 +156,16 @@ private:
 
     std::string get_info(){
         std::ostringstream oss;
-        oss <<  "leader: " << leader << 
-                "min_edge.to: " << min_edge.to <<
-                "min_edge.weight: " << min_edge.weight <<
-                "min_edge_min_node_rank: " << min_edge_min_node_rank <<
-                "tree_nodes: ";
+        oss <<  " min_edge.to: " << min_edge.to <<
+                " min_edge.weight: " << min_edge.weight <<
+                " min_edge_min_node_rank: " << min_edge_min_node_rank <<
+                " tree_nodes: ";
         for(std::set< int >::iterator it = tree_nodes.begin(); it != tree_nodes.end(); ++it){
             oss << "( " << *it << " )";
         }
         return oss.str();
     }
 public:
-    int leader;
     Graph_edge min_edge;
     int min_edge_min_node_rank;
     std::set < int > tree_nodes;
@@ -175,30 +173,58 @@ public:
         return MSG_GRAPH_LEADER_ELECT_TAG;
     }
     void merge(MSG_graph_leader_elect& msg_other){
+// my:      leader: 0  min_edge.to: -1 min_edge.weight: -1 min_edge_min_node_rank: -1 tree_nodes: ( 0 )( 1 )( 2 )( 3 )( 4 )
+// other :  leader: 2  min_edge.to: 1 min_edge.weight: 29 min_edge_min_node_rank: 1 tree_nodes: ( 0 )( 1 )( 2 )( 3 )( 4 )
+
+
         // expand mst
         tree_nodes.insert(msg_other.tree_nodes.begin(),msg_other.tree_nodes.end());
         // merge the other message into the local one?
-        if( (
-                // if our candidate is already in mst
-                tree_nodes.count(min_edge.to) > 0
-                || (
-                    // or the other has a candidate
+        if( 
+            (
+                (
+                    // if we dont have a valid candidate
+                    min_edge.to == -1
+                    || tree_nodes.count(min_edge.to) > 0
+                ) && (
+                    // and other has one
                     msg_other.min_edge.to != -1
-                    // which is new
-                    && tree_nodes.count(msg_other.min_edge.to) < 1
+                    || tree_nodes.count(msg_other.min_edge.to) == 0
                 )
-            ) && (
-                // and we dont have a candidate
-                min_edge.to == -1
-                // or candidate has min edge
-                || msg_other.min_edge.weight < min_edge.weight
-                // or if both the same, the one with min_node_rank wins
-                || ( 
-                    msg_other.min_edge.weight == min_edge.weight
-                    && msg_other.min_edge_min_node_rank < min_edge_min_node_rank
+            ) || (
+                // or we both have
+                (
+                    ( 
+                        // a valid candidate
+                        (
+                            min_edge.to != -1
+                            || tree_nodes.count(min_edge.to) == 0
+                        ) && (
+                            msg_other.min_edge.to != -1
+                            || tree_nodes.count(msg_other.min_edge.to) == 0
+                        )
+                    ) || (
+                        // or not a valid candidate
+                        (
+                            min_edge.to == -1
+                            || tree_nodes.count(min_edge.to) > 0
+                        ) && (
+                            msg_other.min_edge.to == -1
+                            || tree_nodes.count(msg_other.min_edge.to) > 0
+                        )
+                    )
+                ) && (
+                    // and other candidate has min edge
+                    msg_other.min_edge.weight < min_edge.weight
+                    // or if both the same, the one with min_node_rank wins
+                    || ( 
+                        msg_other.min_edge.weight == min_edge.weight
+                        && msg_other.min_edge_min_node_rank < min_edge_min_node_rank
+                    )
                 )
             )
         ){
+            std::cout << "Merging message: " << leader << " <- " << msg_other.leader << std::endl;
             leader                      = msg_other.leader;
             min_edge                    = msg_other.min_edge;
             min_edge_min_node_rank      = msg_other.min_edge_min_node_rank;
