@@ -173,9 +173,6 @@ public:
         return MSG_GRAPH_LEADER_ELECT_TAG;
     }
     void merge(MSG_graph_leader_elect& msg_other){
-// my:      leader: 0  min_edge.to: -1 min_edge.weight: -1 min_edge_min_node_rank: -1 tree_nodes: ( 0 )( 1 )( 2 )( 3 )( 4 )
-// other :  leader: 2  min_edge.to: 1 min_edge.weight: 29 min_edge_min_node_rank: 1 tree_nodes: ( 0 )( 1 )( 2 )( 3 )( 4 )
-
 
         // expand mst
         tree_nodes.insert(msg_other.tree_nodes.begin(),msg_other.tree_nodes.end());
@@ -189,7 +186,7 @@ public:
                 ) && (
                     // and other has one
                     msg_other.min_edge.to != -1
-                    || tree_nodes.count(msg_other.min_edge.to) == 0
+                    && tree_nodes.count(msg_other.min_edge.to) == 0
                 )
             ) || (
                 // or we both have
@@ -198,10 +195,10 @@ public:
                         // a valid candidate
                         (
                             min_edge.to != -1
-                            || tree_nodes.count(min_edge.to) == 0
+                            && tree_nodes.count(min_edge.to) == 0
                         ) && (
                             msg_other.min_edge.to != -1
-                            || tree_nodes.count(msg_other.min_edge.to) == 0
+                            && tree_nodes.count(msg_other.min_edge.to) == 0
                         )
                     ) || (
                         // or not a valid candidate

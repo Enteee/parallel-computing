@@ -47,7 +47,7 @@ int main(int argc, char *argv[]){
     std::cout << "Mode: " << mode << std::endl;
     int scenario = DEFAULT_SCENARIO;
     if(argc > 2){
-//        scenario = std::stoi(std::string(argv[2]));
+        scenario = std::stoi(std::string(argv[2]));
     }
     std::cout << "Scenario: " << scenario << std::endl;
 
