@@ -97,7 +97,7 @@ template<class MLE> void Tree_node::leader_elect(MLE& msg){
     // operator used for selecting nodes from which we didn't got a message
     while(elect_messages_left > 1){
         // get all the outstanding requests
-        typename std::vector< Leader_elect_node >::iterator it = std::find_if(nodes.begin(), nodes.end(), [](Leader_elect_node& n ) { return ! n.got_message; });
+        //typename std::vector< Leader_elect_node >::iterator it = std::find_if(nodes.begin(), nodes.end(), [](Leader_elect_node& n ) { return ! n.got_message; });
 /*
         std::list< mpi::request > reqs;
         for(auto & node : nodes){
@@ -109,9 +109,9 @@ template<class MLE> void Tree_node::leader_elect(MLE& msg){
         mpi::wait_some(reqs.begin(), reqs.end());
 */
 //debug_break();
-        for (; it != nodes.end(); ++it){
+        for (typename std::vector< Leader_elect_node >::iterator it = nodes.begin(); it != nodes.end(); ++it){
             Leader_elect_node& node = *it;
-            if(node.req.test() && node.got_message == false){
+            if(node.got_message == false && node.req.test()){
                 MLE& msg_in = node.elect_message;
                 // we got something
                 std::cout << "Msg from: "<< node.node_rank << std::endl;

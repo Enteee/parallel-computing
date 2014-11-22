@@ -292,15 +292,26 @@ void Graph_node::boruvka_mst(){
     }
     // call constructor which does nothing
     Tree_node tree_node(0);
+
+    // set up advertise message (add me)
+    MSG_graph_mst_adv adv_msg;
+    adv_msg.tree_nodes.insert(world.rank());
+
+    // set up tree leader elect message
     MSG_graph_leader_elect msg;
     do {
+        // search where to grow mst
+        tree_node.leader_elect(adv_msg);
+        std::cout << "Nodes in MST:" << std::endl;
+        adv_msg.print();
+        
         // check if we have still candidates not connected
         Graph_edge min_edge;
         min_edge.to     = -1;
         min_edge.weight = -1;
         for(std::vector< Mst_candidate >::iterator it = mst_candidates.begin();it != mst_candidates.end();++it){
             Mst_candidate& mst_candidate = *it;
-            if(msg.tree_nodes.count(mst_candidate.edge.to) > 0){
+            if(adv_msg.tree_nodes.count(mst_candidate.edge.to) > 0){
                 mst_candidate.connected = true;
             }else if(mst_candidate.connected == false){
                 if( min_edge.to == -1 // first
@@ -312,7 +323,6 @@ void Graph_node::boruvka_mst(){
         }
         msg.min_edge                    = min_edge;
         msg.min_edge_min_node_rank      = (world.rank() < min_edge.to ) ? world.rank() : min_edge.to;
-        msg.tree_nodes.insert(world.rank());
         // search where to grow mst
         std::cout << "Tree:" << std::endl;
         tree_node.print();
@@ -334,7 +344,6 @@ void Graph_node::boruvka_mst(){
                 world.send(min_edge.to, grow_message.tag(), grow_message);
             }
             // add node
-            msg.tree_nodes.insert(min_edge.to);
             tree_node.connected.push_back(min_edge.to);
         }
     }while(msg.min_edge.to != -1);

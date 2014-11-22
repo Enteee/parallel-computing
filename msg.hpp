@@ -151,65 +151,39 @@ private:
         ar & leader;
         ar & min_edge;
         ar & min_edge_min_node_rank;
-        ar & tree_nodes;
     }
 
     std::string get_info(){
         std::ostringstream oss;
         oss <<  " min_edge.to: " << min_edge.to <<
                 " min_edge.weight: " << min_edge.weight <<
-                " min_edge_min_node_rank: " << min_edge_min_node_rank <<
-                " tree_nodes: ";
-        for(std::set< int >::iterator it = tree_nodes.begin(); it != tree_nodes.end(); ++it){
-            oss << "( " << *it << " )";
-        }
+                " min_edge_min_node_rank: " << min_edge_min_node_rank;
         return oss.str();
     }
 public:
     Graph_edge min_edge;
     int min_edge_min_node_rank;
-    std::set < int > tree_nodes;
     int tag(){
         return MSG_GRAPH_LEADER_ELECT_TAG;
     }
     void merge(MSG_graph_leader_elect& msg_other){
 
-        // expand mst
-        tree_nodes.insert(msg_other.tree_nodes.begin(),msg_other.tree_nodes.end());
         // merge the other message into the local one?
         if( 
             (
                 (
                     // if we dont have a valid candidate
                     min_edge.to == -1
-                    || tree_nodes.count(min_edge.to) > 0
                 ) && (
                     // and other has one
                     msg_other.min_edge.to != -1
-                    && tree_nodes.count(msg_other.min_edge.to) == 0
                 )
             ) || (
-                // or we both have
+                // or we both have a valid candidate
                 (
-                    ( 
-                        // a valid candidate
-                        (
-                            min_edge.to != -1
-                            && tree_nodes.count(min_edge.to) == 0
-                        ) && (
-                            msg_other.min_edge.to != -1
-                            && tree_nodes.count(msg_other.min_edge.to) == 0
-                        )
-                    ) || (
-                        // or not a valid candidate
-                        (
-                            min_edge.to == -1
-                            || tree_nodes.count(min_edge.to) > 0
-                        ) && (
-                            msg_other.min_edge.to == -1
-                            || tree_nodes.count(msg_other.min_edge.to) > 0
-                        )
-                    )
+                    min_edge.to != -1
+                ) && (
+                    msg_other.min_edge.to != -1
                 ) && (
                     // and other candidate has min edge
                     msg_other.min_edge.weight < min_edge.weight
@@ -239,10 +213,40 @@ private:
         // do nothing
     }
 public:
+    
     int tag(){
         return MSG_GRAPH_MST_GROW;
     }
 };
 BOOST_IS_MPI_DATATYPE(MSG_graph_mst_grow);
 
+#define MSG_GRAPH_MST_ADV_TAG 6
+class MSG_graph_mst_adv : public MSG_leader_elect<MSG_graph_mst_adv> {
+private:
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version){
+        ar & boost::serialization::base_object<MSG_leader_elect>(*this);
+        ar & tree_nodes;
+    }
+
+    std::string get_info(){
+        std::ostringstream oss;
+        oss << " tree_nodes: ";
+        for(std::set< int >::iterator it = tree_nodes.begin(); it != tree_nodes.end(); ++it){
+            oss << "( " << *it << " )";
+        }
+        return oss.str();
+    }
+public:
+    std::set < int > tree_nodes;
+    int tag(){
+        return MSG_GRAPH_MST_ADV_TAG;
+    }
+    void merge(MSG_graph_mst_adv& msg_other){
+        // expand mst
+        tree_nodes.insert(msg_other.tree_nodes.begin(),msg_other.tree_nodes.end());
+    }
+};
 #endif
