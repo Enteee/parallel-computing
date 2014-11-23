@@ -50,7 +50,7 @@ Change the options under '#Run configuration' in the Makefile.
 #Run configuration
 RUN_COPIES=12
 MODE=MST
-SCENARIO=-1
+SCENARIO=1
 [...]
 ```
 

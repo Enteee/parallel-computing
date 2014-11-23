@@ -6,7 +6,7 @@
 #Run configuration
 RUN_COPIES=12
 MODE=MST
-SCENARIO=-1
+SCENARIO=1
 ARGS=$(MODE) $(SCENARIO)
 
 application := parallel
