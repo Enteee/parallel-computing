@@ -7,7 +7,9 @@ source_files := utils.cpp msg.cpp node.cpp main.cpp
 
 CC=g++
 DEBUG=gdb
-TERMINAL=urxvt
+TERMINAL_URXVT=$(shell which urxvt 2>/dev/null )
+TERMINAL_KONSOLE=$(shell which konsole 2>/dev/null )
+TERMINAL_XTERM=$(shell which xterm 2>/dev/null )
 TARGET_DIR=target
 
 #seed
@@ -16,7 +18,7 @@ SET_SEED=1
 #Run
 RUN_COPIES=12
 MODE=MST
-SCENARIO=1
+SCENARIO=-1
 ARGS=$(MODE) $(SCENARIO)
 
 # MPI
@@ -34,7 +36,15 @@ BASE_MPI_RUN_FLAGS=-n $(RUN_COPIES)
 MPI_RUN_FLAGS=$(BASE_MPI_RUN_FLAGS)
 DEBUG_MPI_RUN_FLAGS=$(BASE_MPI_RUN_FLAGS)
 
-BASE_MPI_RUN_TERMINAL=$(TERMINAL) --hold -e
+ifneq ($(TERMINAL_URXVT),)
+BASE_MPI_RUN_TERMINAL=$(TERMINAL_URXVT) --hold -e
+else ifneq ($(TERMINAL_KONSOLE),)
+BASE_MPI_RUN_TERMINAL=$(TERMINAL_KONSOLE) --noclose -e
+else ifneq ($(TERMINAL_XTERM),)
+BASE_MPI_RUN_TERMINAL=$(TERMINAL_XTERM) -hold -e
+else
+BASE_MPI_RUN_TERMINAL=
+endif
 MPI_RUN_TERMINAL=$(BASE_MPI_RUN_TERMINAL)
 DEBUG_MPI_RUN_TERMINAL=$(BASE_MPI_RUN_TERMINAL)
 
@@ -61,7 +71,7 @@ debug: MPI_RUN_FLAGS=$(DEBUG_MPI_RUN_FLAGS)
 debug: MPI_RUN_TERMINAL=$(DEBUG_MPI_RUN_TERMINAL)
 debug: MPI_RUN_APPLICATION=$(DEBUG_MPI_RUN_APPLICATION)
 debug: MPI_RUN_ARGS=$(DEBUG_MPI_RUN_ARGS)
-debug: $(application) run
+debug: $(application)
 
 rundebug: MPI_RUN_FLAGS=$(DEBUG_MPI_RUN_FLAGS)
 rundebug: MPI_RUN_TERMINAL=$(DEBUG_MPI_RUN_TERMINAL)

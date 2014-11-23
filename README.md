@@ -5,20 +5,41 @@ Parallel computing project for school
 
 ## Requirments 
 
-* urxvt installed, or change TERMINAL variable in Makefile
+* a compatible terminal emulator installed:
+** urxvt
+** konsole
+** xterm
+* g++
+* gdb
 * mpi library installed
 * boost installed
 
 ## Compile
 
+### Normal
+
+```bash
 $ make
+```
+
+### Debug
+
+```bash
+$ make debug
+```
 
 ## Run
 
+### Normal
+
+```bash
 $ make run
+```
 
-## Debug
+### Debug
 
-$ make debug
+```bash
+$ make rundebug
+```
 
 ## BUGS
