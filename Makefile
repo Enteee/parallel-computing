@@ -2,6 +2,13 @@
 # Makefile
 # vim: set noexpandtab list:
 #
+
+#Run configuration
+RUN_COPIES=12
+MODE=MST
+SCENARIO=-1
+ARGS=$(MODE) $(SCENARIO)
+
 application := parallel
 source_files := utils.cpp msg.cpp node.cpp main.cpp
 
@@ -14,12 +21,6 @@ TARGET_DIR=target
 
 #seed
 SET_SEED=1
-
-#Run
-RUN_COPIES=12
-MODE=MST
-SCENARIO=-1
-ARGS=$(MODE) $(SCENARIO)
 
 # MPI
 MPI_COMPILE_FLAGS=$(shell mpic++ --showme:compile)
@@ -55,8 +56,9 @@ DEBUG_MPI_RUN_APPLICATION=$(DEBUG) -q -ex 'run $(ARGS)' $(BASE_MPI_RUN_APPLICATI
 BASE_MPI_RUN_ARGS=$(ARGS)
 MPI_RUN_ARGS=$(BASE_MPI_RUN_ARGS)
 DEBUG_MPI_RUN_ARGS=
+HELP_MPI_RUN_ARGS= --help
 
-.PHONY: run debug rundebug
+.PHONY: debug run rundebug help
 
 $(application): $(source_files)
 	mkdir -p $(TARGET_DIR)
@@ -78,6 +80,10 @@ rundebug: MPI_RUN_TERMINAL=$(DEBUG_MPI_RUN_TERMINAL)
 rundebug: MPI_RUN_APPLICATION=$(DEBUG_MPI_RUN_APPLICATION)
 rundebug: MPI_RUN_ARGS=$(DEBUG_MPI_RUN_ARGS)
 rundebug: run
+
+help: RUN_COPIES=1
+help: MPI_RUN_ARGS=$(HELP_MPI_RUN_ARGS)
+help: run
 
 clean:
 	rm -rf $(TARGET_DIR)
