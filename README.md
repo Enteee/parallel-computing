@@ -6,9 +6,9 @@ Parallel computing project for school
 ## Requirments 
 
 * a compatible terminal emulator installed:
-** urxvt
-** konsole
-** xterm
+ * urxvt
+ * konsole
+ * xterm
 * g++
 * gdb
 * mpi library installed
